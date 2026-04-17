@@ -1,0 +1,92 @@
+/**
+ * Constantes de la aplicación
+ */
+
+export const CONSTANTS = {
+  // Paginación
+  PAGINATION: {
+    DEFAULT_LIMIT: 10,
+    DEFAULT_OFFSET: 0,
+    MAX_LIMIT: 100,
+  },
+
+  // Validación de contraseña
+  PASSWORD: {
+    MIN_LENGTH: 8,
+    REQUIRE_UPPERCASE: true,
+    REQUIRE_LOWERCASE: true,
+    REQUIRE_NUMBERS: true,
+    REQUIRE_SPECIAL_CHARS: false,
+  },
+
+  // JWT
+  JWT: {
+    ALGORITHM: 'HS256',
+    ACCESS_TOKEN_EXPIRY: '15m',
+    REFRESH_TOKEN_EXPIRY: '7d',
+  },
+
+  // Teléfono
+  PHONE: {
+    MIN_LENGTH: 10,
+    MAX_LENGTH: 20,
+  },
+
+  // Negocio
+  APPOINTMENT: {
+    MIN_ADVANCE_BOOKING_MINUTES: 15,
+    DEFAULT_DURATION_MINUTES: 30,
+    MAX_ADVANCE_BOOKING_DAYS: 90,
+  },
+
+  // Rating
+  RATING: {
+    MIN: 0,
+    MAX: 5,
+  },
+
+  // Mensajes
+  MESSAGES: {
+    SUCCESS: 'Operación exitosa',
+    ERROR: 'Ocurrió un error',
+    UNAUTHORIZED: 'No autorizado',
+    FORBIDDEN: 'Acceso denegado',
+    NOT_FOUND: 'No encontrado',
+    VALIDATION_ERROR: 'Error de validación',
+    CONFLICT: 'Conflicto en la solicitud',
+  },
+};
+
+/**
+ * Enumeración de códigos de error personalizados
+ */
+export enum ERROR_CODES {
+  // Autenticación
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  EMAIL_ALREADY_EXISTS = 'EMAIL_ALREADY_EXISTS',
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+
+  // Citas
+  APPOINTMENT_NOT_FOUND = 'APPOINTMENT_NOT_FOUND',
+  APPOINTMENT_CONFLICT = 'APPOINTMENT_CONFLICT',
+  CANNOT_CANCEL_APPOINTMENT = 'CANNOT_CANCEL_APPOINTMENT',
+  PROVIDER_UNAVAILABLE = 'PROVIDER_UNAVAILABLE',
+
+  // Proveedor
+  PROVIDER_NOT_FOUND = 'PROVIDER_NOT_FOUND',
+  PROVIDER_NOT_VERIFIED = 'PROVIDER_NOT_VERIFIED',
+
+  // TimeSlot
+  TIMESLOT_NOT_FOUND = 'TIMESLOT_NOT_FOUND',
+  TIMESLOT_FULL = 'TIMESLOT_FULL',
+
+  // Validación
+  INVALID_INPUT = 'INVALID_INPUT',
+  MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
+
+  // Servidor
+  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+  DATABASE_ERROR = 'DATABASE_ERROR',
+}
