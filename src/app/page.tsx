@@ -110,10 +110,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/30">
-              O
+              G
             </div>
             <span className="font-bold text-xl tracking-tight text-white">
-              Omni<span className="text-indigo-400">Citas</span>
+              Gestión <span className="text-indigo-400">Citas</span>
             </span>
             <span className="text-[10px] font-semibold tracking-wide bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full uppercase">
               SaaS Multi-Negocio
