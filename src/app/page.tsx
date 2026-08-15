@@ -1,7 +1,8 @@
 import React from 'react';
+import Link from 'next/link';
 import { TimeSlotPicker } from '@/components/booking/TimeSlotPicker';
 import { Service, Staff, WorkingHour, Appointment } from '@/types/database';
-import { Calendar, ShieldCheck, Zap, Users, Sparkles, Building2 } from 'lucide-react';
+import { Calendar, ShieldCheck, Zap, Users, Sparkles, Building2, UserCheck, ArrowRight } from 'lucide-react';
 
 // Datos de demostración (Mock Data) para probar el componente de disponibilidad sin backend conectado aún
 const mockService: Service = {
@@ -121,11 +122,16 @@ export default function Home() {
           </div>
 
           <nav className="flex items-center gap-4 text-sm">
-            <a href="#arquitectura" className="text-slate-400 hover:text-white transition">Arquitectura</a>
-            <a href="#demo" className="text-slate-400 hover:text-white transition">Demo Agendamiento</a>
-            <a href="#despliegue" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition shadow-lg shadow-indigo-500/20">
-              Comenzar
-            </a>
+            <a href="#demo" className="text-slate-400 hover:text-white transition hidden sm:inline-block">Demo Agendamiento</a>
+            <Link href="/login" className="text-slate-300 hover:text-white font-medium transition">
+              Iniciar Sesión
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-lg shadow-indigo-500/20 flex items-center gap-1.5"
+            >
+              Registrar Negocio <ArrowRight className="w-4 h-4" />
+            </Link>
           </nav>
         </div>
       </header>
@@ -145,8 +151,24 @@ export default function Home() {
           Gestión inteligente de horarios, cálculo en tiempo real de disponibilidad sin solapamiento de citas y URL personalizada para cada negocio.
         </p>
 
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <Link
+            href="/register"
+            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/25 transition duration-200 flex items-center justify-center gap-2 text-base"
+          >
+            Registrar Mi Negocio Gratis <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link
+            href="/login"
+            className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold rounded-2xl transition flex items-center justify-center gap-2 text-base"
+          >
+            <UserCheck className="w-5 h-5 text-indigo-400" /> Acceder a Mi Panel
+          </Link>
+        </div>
+
         {/* Feature badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 text-left">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-8 text-left">
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
             <Building2 className="w-5 h-5 text-indigo-400 mb-2" />
             <h3 className="font-semibold text-sm">Multi-Tenant Isolation</h3>
