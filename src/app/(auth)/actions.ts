@@ -74,7 +74,8 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
-    let friendlyError = 'Correo o contraseña incorrectos.';
+    console.error('Supabase Login Error:', error);
+    let friendlyError = error.message || 'Correo o contraseña incorrectos.';
 
     if (error.message?.includes('Invalid login credentials')) {
       friendlyError = 'Correo o contraseña incorrectos.';
@@ -160,7 +161,8 @@ export async function registerTenantAction(formData: FormData) {
   });
 
   if (authError) {
-    let friendlyError = 'No pudimos completar el registro. Inténtalo nuevamente.';
+    console.error('Supabase SignUp Error:', authError);
+    let friendlyError = authError.message || 'No pudimos completar el registro. Inténtalo nuevamente.';
 
     const msg = authError.message.toLowerCase();
     if (msg.includes('already registered') || msg.includes('user_already_exists')) {

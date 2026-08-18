@@ -19,7 +19,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Extraer metadatos pasados en signUp({ options: { data: { ... } } })
+  -- Extraer metadatos pasadosA en signUp({ options: { data: { ... } } })
   v_business_name := COALESCE(NULLIF(NEW.raw_user_meta_data->>'business_name', ''), 'Mi Negocio');
   v_slug := COALESCE(NULLIF(NEW.raw_user_meta_data->>'slug', ''), 'negocio-' || substr(NEW.id::text, 1, 8));
   v_full_name := COALESCE(NULLIF(NEW.raw_user_meta_data->>'full_name', ''), SPLIT_PART(NEW.email, '@', 1));
