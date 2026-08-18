@@ -11,6 +11,32 @@ export interface GenerateSlotsOptions {
 }
 
 /**
+ * Obtiene el horario de atención efectivo para un profesional y día específico.
+ * Regla de Prioridad:
+ * 1. Si existe un horario específico para el profesional (staff_id = staffId), se usa prioritariamente.
+ * 2. Si no existe, se utiliza el horario general del negocio (staff_id IS NULL / undefined).
+ * 3. Si no existe ninguno, se retorna null (día no laborable).
+ */
+export function getEffectiveWorkingHour(
+  workingHoursList: WorkingHour[],
+  staffId: string | null | undefined,
+  dayOfWeek: number
+): WorkingHour | null {
+  if (staffId) {
+    const specific = workingHoursList.find(
+      (h) => h.staff_id === staffId && h.day_of_week === dayOfWeek
+    );
+    if (specific) return specific;
+  }
+
+  const general = workingHoursList.find(
+    (h) => (h.staff_id === null || h.staff_id === undefined) && h.day_of_week === dayOfWeek
+  );
+
+  return general || null;
+}
+
+/**
  * Genera los intervalos de tiempo disponibles para una fecha y profesional específico
  * evitando solapamientos con citas existentes y respetando descansos y horarios de atención.
  */

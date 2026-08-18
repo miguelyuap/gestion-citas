@@ -1,3 +1,5 @@
+export * from './theme';
+
 export type UserRole = 'owner' | 'admin' | 'staff';
 export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 
@@ -84,8 +86,32 @@ export interface Appointment {
   status: AppointmentStatus;
   total_price: number;
   notes?: string | null;
+  cancellation_reason?: string | null;
+  can_reschedule?: boolean | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AppointmentWithDetails extends Appointment {
+  client?: Client | null;
+  service?: Service | null;
+  staff?: Staff | null;
+}
+
+export interface AppointmentNotification {
+  id: string;
+  tenant_id: string;
+  appointment_id: string;
+  type: 'confirmation' | 'cancellation' | 'reminder' | 'status_change';
+  channel: 'system' | 'email' | 'whatsapp' | 'sms';
+  recipient_name?: string | null;
+  recipient_contact?: string | null;
+  title: string;
+  message: string;
+  status: 'pending' | 'sent' | 'failed';
+  metadata?: Record<string, any> | null;
+  created_at: string;
+  sent_at?: string | null;
 }
 
 export interface TimeSlot {
@@ -96,3 +122,4 @@ export interface TimeSlot {
   available: boolean;
   reason?: string;
 }
+
