@@ -105,9 +105,12 @@ export async function getSchedulesDataAction() {
 }
 
 /**
- * Guardar / Actualizar Horarios Generales del Negocio (staff_id IS NULL)
+ * Guardar / Actualizar Horarios Generales por Sucursal del Negocio (staff_id IS NULL)
  */
-export async function saveGeneralWorkingHoursAction(schedules: DayScheduleInput[]) {
+export async function saveGeneralWorkingHoursAction(
+  schedules: DayScheduleInput[],
+  branchId?: string | null
+) {
   if (!Array.isArray(schedules) || schedules.length === 0) {
     return { error: 'No se proporcionaron datos de horario.' };
   }
@@ -134,13 +137,22 @@ export async function saveGeneralWorkingHoursAction(schedules: DayScheduleInput[
   if (!profile?.tenant_id) return { error: 'No se encontró el negocio.' };
 
   const tenantId = profile.tenant_id;
+  const targetBranchId = branchId && branchId !== 'default' ? branchId : null;
 
-  // Consultar registros existentes de horario general
-  const { data: existingGeneralHours } = await supabase
+  // Consultar registros existentes de horario general para esta sucursal específica
+  let query = supabase
     .from('working_hours')
     .select('id, day_of_week')
     .eq('tenant_id', tenantId)
     .is('staff_id', null);
+
+  if (targetBranchId) {
+    query = query.eq('branch_id', targetBranchId);
+  } else {
+    query = query.is('branch_id', null);
+  }
+
+  const { data: existingGeneralHours } = await query;
 
   const existingMap = new Map<number, string>();
   existingGeneralHours?.forEach((row) => existingMap.set(row.day_of_week, row.id));
@@ -151,6 +163,7 @@ export async function saveGeneralWorkingHoursAction(schedules: DayScheduleInput[
     const row: any = {
       tenant_id: tenantId,
       staff_id: null,
+      branch_id: targetBranchId,
       day_of_week: s.day_of_week,
       start_time: normalizeTime(s.start_time) || '08:00:00',
       end_time: normalizeTime(s.end_time) || '17:00:00',
@@ -170,7 +183,7 @@ export async function saveGeneralWorkingHoursAction(schedules: DayScheduleInput[
 
   if (error) {
     console.error('Error saving general working hours:', error);
-    return { error: 'Error al guardar los horarios generales: ' + error.message };
+    return { error: 'Error al guardar los horarios por sucursal: ' + error.message };
   }
 
   revalidatePath('/schedules');
@@ -179,12 +192,13 @@ export async function saveGeneralWorkingHoursAction(schedules: DayScheduleInput[
 }
 
 /**
- * Guardar / Actualizar Horarios Específicos de un Profesional o Restablecer al Horario General
+ * Guardar / Actualizar Horarios Específicos de un Profesional por Sucursal
  */
 export async function saveStaffWorkingHoursAction(
   staffId: string,
   schedules: DayScheduleInput[],
-  useGeneralSchedule: boolean
+  useGeneralSchedule: boolean,
+  branchId?: string | null
 ) {
   if (!staffId) {
     return { error: 'Debe especificar el profesional.' };
@@ -206,14 +220,21 @@ export async function saveStaffWorkingHoursAction(
   if (!profile?.tenant_id) return { error: 'No se encontró el negocio.' };
 
   const tenantId = profile.tenant_id;
+  const targetBranchId = branchId && branchId !== 'default' ? branchId : null;
 
-  // Si opta por usar el horario general del negocio, eliminar horarios personalizados
+  // Si opta por usar el horario general de la sucursal, eliminar horarios personalizados
   if (useGeneralSchedule) {
-    const { error: deleteErr } = await supabase
+    let deleteQuery = supabase
       .from('working_hours')
       .delete()
       .eq('tenant_id', tenantId)
       .eq('staff_id', staffId);
+
+    if (targetBranchId) {
+      deleteQuery = deleteQuery.eq('branch_id', targetBranchId);
+    }
+
+    const { error: deleteErr } = await deleteQuery;
 
     if (deleteErr) {
       return { error: 'Error al restablecer al horario general: ' + deleteErr.message };
@@ -221,7 +242,7 @@ export async function saveStaffWorkingHoursAction(
 
     revalidatePath('/schedules');
     revalidatePath('/[slug]', 'layout');
-    return { success: true, message: 'Se ha restablecido el horario al general del negocio.' };
+    return { success: true, message: 'Se ha restablecido el horario al general de la sucursal.' };
   }
 
   // Si no, validar datos ingresados
@@ -230,12 +251,18 @@ export async function saveStaffWorkingHoursAction(
     if (validationErr) return { error: validationErr };
   }
 
-  // Consultar registros existentes para este staff
-  const { data: existingStaffHours } = await supabase
+  // Consultar registros existentes para este staff en esta sucursal
+  let staffQuery = supabase
     .from('working_hours')
     .select('id, day_of_week')
     .eq('tenant_id', tenantId)
     .eq('staff_id', staffId);
+
+  if (targetBranchId) {
+    staffQuery = staffQuery.eq('branch_id', targetBranchId);
+  }
+
+  const { data: existingStaffHours } = await staffQuery;
 
   const existingMap = new Map<number, string>();
   existingStaffHours?.forEach((row) => existingMap.set(row.day_of_week, row.id));
@@ -246,6 +273,7 @@ export async function saveStaffWorkingHoursAction(
     const row: any = {
       tenant_id: tenantId,
       staff_id: staffId,
+      branch_id: targetBranchId,
       day_of_week: s.day_of_week,
       start_time: normalizeTime(s.start_time) || '08:00:00',
       end_time: normalizeTime(s.end_time) || '17:00:00',

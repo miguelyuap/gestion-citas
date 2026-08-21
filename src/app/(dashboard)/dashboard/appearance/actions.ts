@@ -232,21 +232,50 @@ export async function saveTenantAppearanceAction(appearanceData: CompleteTenantA
       if (sectionsErr) throw sectionsErr;
     }
 
-    // 4. Guardar tenant_socials
+    // 4. Guardar tenant_socials de forma tolerante a fallos de esquema
     if (appearanceData.socials) {
+      const cleanSocial = (val?: string | null) => (val && val.trim() !== '' ? val.trim() : null);
+
+      const extendedPayload = {
+        tenant_id: tenantId,
+        instagram: cleanSocial(appearanceData.socials.instagram),
+        facebook: cleanSocial(appearanceData.socials.facebook),
+        tiktok: cleanSocial(appearanceData.socials.tiktok),
+        whatsapp: cleanSocial(appearanceData.socials.whatsapp),
+        twitter: cleanSocial(appearanceData.socials.twitter),
+        youtube: cleanSocial(appearanceData.socials.youtube),
+        linkedin: cleanSocial(appearanceData.socials.linkedin),
+        website: cleanSocial(appearanceData.socials.website),
+        telegram: cleanSocial(appearanceData.socials.telegram),
+        updated_at: new Date().toISOString(),
+      };
+
       const { error: socialsErr } = await supabase
         .from('tenant_socials')
-        .upsert({
-          tenant_id: tenantId,
-          instagram: appearanceData.socials.instagram || null,
-          facebook: appearanceData.socials.facebook || null,
-          tiktok: appearanceData.socials.tiktok || null,
-          whatsapp: appearanceData.socials.whatsapp || null,
-          updated_at: new Date().toISOString(),
-        });
+        .upsert(extendedPayload);
 
-      if (socialsErr) throw socialsErr;
+      if (socialsErr) {
+        console.warn('[saveTenantAppearanceAction] Reintentando guardado con redes sociales base:', socialsErr.message);
+        const basePayload = {
+          tenant_id: tenantId,
+          instagram: cleanSocial(appearanceData.socials.instagram),
+          facebook: cleanSocial(appearanceData.socials.facebook),
+          tiktok: cleanSocial(appearanceData.socials.tiktok),
+          whatsapp: cleanSocial(appearanceData.socials.whatsapp),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: baseSocialsErr } = await supabase
+          .from('tenant_socials')
+          .upsert(basePayload);
+
+        if (baseSocialsErr) {
+          console.error('[saveTenantAppearanceAction] Error guardando redes base:', baseSocialsErr);
+        }
+      }
     }
+
+
 
     // Revalidar cachés
     revalidatePath('/dashboard/appearance');

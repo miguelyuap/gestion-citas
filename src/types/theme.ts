@@ -50,7 +50,13 @@ export interface TenantSocials {
   facebook?: string | null;
   tiktok?: string | null;
   whatsapp?: string | null;
+  twitter?: string | null;
+  youtube?: string | null;
+  linkedin?: string | null;
+  website?: string | null;
+  telegram?: string | null;
 }
+
 
 export interface TenantGalleryItem {
   id: string;

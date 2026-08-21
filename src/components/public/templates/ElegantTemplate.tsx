@@ -20,6 +20,7 @@ interface TemplateProps {
   workingHours?: WorkingHour[];
   bookingUrl: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  hideHeaderFooter?: boolean;
 }
 
 export function ElegantTemplate({
@@ -30,6 +31,7 @@ export function ElegantTemplate({
   workingHours,
   bookingUrl,
   deviceViewport,
+  hideHeaderFooter = false,
 }: TemplateProps) {
   const { settings, theme, sections, socials, gallery, testimonials } = appearance;
   const buttonStyle = theme.button_style || 'square';
@@ -102,11 +104,15 @@ export function ElegantTemplate({
 
   return (
     <div className="flex flex-col min-h-screen">
-      <PublicNavbar tenant={tenant} bookingUrl={bookingUrl} deviceViewport={deviceViewport} />
+      {!hideHeaderFooter && (
+        <PublicNavbar tenant={tenant} bookingUrl={bookingUrl} deviceViewport={deviceViewport} />
+      )}
       <main className="flex-1">
         {sortedSections.map((sec) => renderSection(sec.section_key))}
       </main>
-      <PublicFooter tenant={tenant} socials={socials} deviceViewport={deviceViewport} />
+      {!hideHeaderFooter && (
+        <PublicFooter tenant={tenant} socials={socials} deviceViewport={deviceViewport} />
+      )}
     </div>
   );
 }

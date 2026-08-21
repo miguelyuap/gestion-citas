@@ -5,7 +5,7 @@ import { ThemeProvider } from '../shared/ThemeProvider';
 import { ModernTemplate } from './ModernTemplate';
 import { ElegantTemplate } from './ElegantTemplate';
 import { BoldTemplate } from './BoldTemplate';
-import { Tenant, Service, Staff, WorkingHour } from '@/types/database';
+import { Tenant, Service, Staff, WorkingHour, Branch } from '@/types/database';
 import { CompleteTenantAppearance } from '@/types/theme';
 
 interface PublicPageRendererProps {
@@ -13,9 +13,11 @@ interface PublicPageRendererProps {
   appearance: CompleteTenantAppearance;
   services: Service[];
   staffList: Staff[];
+  branches?: Branch[];
   workingHours?: WorkingHour[];
   bookingUrl?: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  hideHeaderFooter?: boolean;
 }
 
 export function PublicPageRenderer({
@@ -23,9 +25,11 @@ export function PublicPageRenderer({
   appearance,
   services,
   staffList,
+  branches = [],
   workingHours,
   bookingUrl = `/${tenant.slug}/book`,
   deviceViewport,
+  hideHeaderFooter = false,
 }: PublicPageRendererProps) {
   const { settings, theme } = appearance;
   const templateType = settings.template || 'modern';
@@ -42,6 +46,7 @@ export function PublicPageRenderer({
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
           />
         );
       case 'bold':
@@ -54,6 +59,7 @@ export function PublicPageRenderer({
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
           />
         );
       case 'modern':
@@ -64,9 +70,11 @@ export function PublicPageRenderer({
             appearance={appearance}
             services={services}
             staffList={staffList}
+            branches={branches}
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
           />
         );
     }
