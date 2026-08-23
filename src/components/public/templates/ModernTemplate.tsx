@@ -4,12 +4,13 @@ import { PublicFooter } from '../shared/PublicFooter';
 import { HeroSection } from '../sections/HeroSection';
 import { ServicesSection } from '../sections/ServicesSection';
 import { StaffSection } from '../sections/StaffSection';
+import { HowItWorksSection } from '../sections/HowItWorksSection';
 import { AboutSection } from '../sections/AboutSection';
 import { GallerySection } from '../sections/GallerySection';
 import { TestimonialsSection } from '../sections/TestimonialsSection';
 import { BookingCTASection } from '../sections/BookingCTASection';
 import { ContactSection } from '../sections/ContactSection';
-import { Tenant, Service, Staff, WorkingHour } from '@/types/database';
+import { Tenant, Service, Staff, WorkingHour, Branch } from '@/types/database';
 import { CompleteTenantAppearance } from '@/types/theme';
 
 interface TemplateProps {
@@ -17,9 +18,17 @@ interface TemplateProps {
   appearance: CompleteTenantAppearance;
   services: Service[];
   staffList: Staff[];
+  branches?: Branch[];
   workingHours?: WorkingHour[];
   bookingUrl: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  hideHeaderFooter?: boolean;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function ModernTemplate({
@@ -27,86 +36,66 @@ export function ModernTemplate({
   appearance,
   services,
   staffList,
+  branches = [],
   workingHours,
   bookingUrl,
   deviceViewport,
+  hideHeaderFooter = false,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: TemplateProps) {
-  const { settings, theme, sections, socials, gallery, testimonials } = appearance;
+  const { settings, theme, socials, testimonials } = appearance;
   const buttonStyle = theme.button_style || 'rounded';
-
-  const sortedSections = [...sections]
-    .filter((s) => s.is_enabled)
-    .sort((a, b) => a.display_order - b.display_order);
-
-  const renderSection = (key: string) => {
-    switch (key) {
-      case 'hero':
-        return (
-          <HeroSection
-            key="hero"
-            settings={settings}
-            bookingUrl={bookingUrl}
-            buttonStyle={buttonStyle}
-            variant="modern"
-            deviceViewport={deviceViewport}
-          />
-        );
-      case 'services':
-        return (
-          <ServicesSection
-            key="services"
-            services={services}
-            bookingUrl={bookingUrl}
-            buttonStyle={buttonStyle}
-            deviceViewport={deviceViewport}
-          />
-        );
-      case 'staff':
-        return (
-          <StaffSection
-            key="staff"
-            staffList={staffList}
-            bookingUrl={bookingUrl}
-            buttonStyle={buttonStyle}
-            deviceViewport={deviceViewport}
-          />
-        );
-      case 'about':
-        return <AboutSection key="about" settings={settings} deviceViewport={deviceViewport} />;
-      case 'gallery':
-        return <GallerySection key="gallery" gallery={gallery} deviceViewport={deviceViewport} />;
-      case 'testimonials':
-        return <TestimonialsSection key="testimonials" testimonials={testimonials} deviceViewport={deviceViewport} />;
-      case 'booking_cta':
-        return (
-          <BookingCTASection
-            key="booking_cta"
-            bookingUrl={bookingUrl}
-            buttonStyle={buttonStyle}
-          />
-        );
-      case 'contact':
-        return (
-          <ContactSection
-            key="contact"
-            tenant={tenant}
-            socials={socials}
-            workingHours={workingHours}
-            deviceViewport={deviceViewport}
-          />
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <PublicNavbar tenant={tenant} bookingUrl={bookingUrl} deviceViewport={deviceViewport} />
+      {!hideHeaderFooter && (
+        <PublicNavbar tenant={tenant} bookingUrl={bookingUrl} deviceViewport={deviceViewport} />
+      )}
       <main className="flex-1">
-        {sortedSections.map((sec) => renderSection(sec.section_key))}
+        <HeroSection
+          settings={settings}
+          bookingUrl={bookingUrl}
+          buttonStyle={buttonStyle}
+          variant="modern"
+          deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
+        />
+        <ServicesSection
+          services={services}
+          bookingUrl={bookingUrl}
+          buttonStyle={buttonStyle}
+          deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
+        />
+        <StaffSection
+          staffList={staffList}
+          bookingUrl={bookingUrl}
+          buttonStyle={buttonStyle}
+          deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
+        />
+        <HowItWorksSection />
+        <TestimonialsSection testimonials={testimonials} deviceViewport={deviceViewport} />
+        <ContactSection
+          tenant={tenant}
+          settings={settings}
+          socials={socials}
+          branches={branches}
+          workingHours={workingHours}
+          deviceViewport={deviceViewport}
+        />
       </main>
-      <PublicFooter tenant={tenant} socials={socials} deviceViewport={deviceViewport} />
+      {!hideHeaderFooter && (
+        <PublicFooter tenant={tenant} socials={socials} deviceViewport={deviceViewport} />
+      )}
     </div>
   );
 }

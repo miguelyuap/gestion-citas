@@ -144,6 +144,7 @@ export async function getTenantAppearanceAction() {
     socials: {
       ...DEFAULT_COMPLETE_APPEARANCE.socials,
       ...(socials || {}),
+      whatsapp: socials?.whatsapp || settings?.whatsapp_number || DEFAULT_COMPLETE_APPEARANCE.socials.whatsapp,
     },
     gallery: gallery || [],
     testimonials: testimonials || [],
@@ -232,26 +233,83 @@ export async function saveTenantAppearanceAction(appearanceData: CompleteTenantA
       if (sectionsErr) throw sectionsErr;
     }
 
-    // 4. Guardar tenant_socials
+    // 4. Guardar tenant_socials de forma segura sin depender de restricción de clave única
     if (appearanceData.socials) {
-      const { error: socialsErr } = await supabase
-        .from('tenant_socials')
-        .upsert({
-          tenant_id: tenantId,
-          instagram: appearanceData.socials.instagram || null,
-          facebook: appearanceData.socials.facebook || null,
-          tiktok: appearanceData.socials.tiktok || null,
-          whatsapp: appearanceData.socials.whatsapp || null,
-          updated_at: new Date().toISOString(),
-        });
+      const cleanSocial = (val?: string | null) => (val && val.trim() !== '' ? val.trim() : null);
 
-      if (socialsErr) throw socialsErr;
+      const extendedPayload = {
+        tenant_id: tenantId,
+        instagram: cleanSocial(appearanceData.socials.instagram),
+        facebook: cleanSocial(appearanceData.socials.facebook),
+        tiktok: cleanSocial(appearanceData.socials.tiktok),
+        whatsapp: cleanSocial(appearanceData.socials.whatsapp || appearanceData.settings.whatsapp_number),
+        twitter: cleanSocial(appearanceData.socials.twitter),
+        youtube: cleanSocial(appearanceData.socials.youtube),
+        linkedin: cleanSocial(appearanceData.socials.linkedin),
+        website: cleanSocial(appearanceData.socials.website),
+        telegram: cleanSocial(appearanceData.socials.telegram),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Consultar si ya existe un registro de redes para este tenant_id
+      const { data: existingSocial } = await supabase
+        .from('tenant_socials')
+        .select('tenant_id')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      if (existingSocial) {
+        const { error: updateErr } = await supabase
+          .from('tenant_socials')
+          .update(extendedPayload)
+          .eq('tenant_id', tenantId);
+
+        if (updateErr) {
+          const basePayload = {
+            instagram: cleanSocial(appearanceData.socials.instagram),
+            facebook: cleanSocial(appearanceData.socials.facebook),
+            tiktok: cleanSocial(appearanceData.socials.tiktok),
+            whatsapp: cleanSocial(appearanceData.socials.whatsapp || appearanceData.settings.whatsapp_number),
+            updated_at: new Date().toISOString(),
+          };
+          const { error: baseUpdateErr } = await supabase
+            .from('tenant_socials')
+            .update(basePayload)
+            .eq('tenant_id', tenantId);
+
+          if (baseUpdateErr) throw baseUpdateErr;
+        }
+      } else {
+        const { error: insertErr } = await supabase
+          .from('tenant_socials')
+          .insert(extendedPayload);
+
+        if (insertErr) {
+          const basePayload = {
+            tenant_id: tenantId,
+            instagram: cleanSocial(appearanceData.socials.instagram),
+            facebook: cleanSocial(appearanceData.socials.facebook),
+            tiktok: cleanSocial(appearanceData.socials.tiktok),
+            whatsapp: cleanSocial(appearanceData.socials.whatsapp || appearanceData.settings.whatsapp_number),
+            updated_at: new Date().toISOString(),
+          };
+          const { error: baseInsertErr } = await supabase
+            .from('tenant_socials')
+            .insert(basePayload);
+
+          if (baseInsertErr) throw baseInsertErr;
+        }
+      }
     }
 
-    // Revalidar cachés
+    // Revalidar cachés de Next.js para actualizar la vista pública del cliente
     revalidatePath('/dashboard/appearance');
     if (tenant?.slug) {
       revalidatePath(`/${tenant.slug}`);
+      revalidatePath(`/${tenant.slug}/book`);
+      revalidatePath('/[slug]', 'page');
+      revalidatePath('/[slug]/book', 'page');
+      revalidatePath('/[slug]', 'layout');
     }
 
     return { success: true };

@@ -5,7 +5,7 @@ import { ThemeProvider } from '../shared/ThemeProvider';
 import { ModernTemplate } from './ModernTemplate';
 import { ElegantTemplate } from './ElegantTemplate';
 import { BoldTemplate } from './BoldTemplate';
-import { Tenant, Service, Staff, WorkingHour } from '@/types/database';
+import { Tenant, Service, Staff, WorkingHour, Branch } from '@/types/database';
 import { CompleteTenantAppearance } from '@/types/theme';
 
 interface PublicPageRendererProps {
@@ -13,9 +13,17 @@ interface PublicPageRendererProps {
   appearance: CompleteTenantAppearance;
   services: Service[];
   staffList: Staff[];
+  branches?: Branch[];
   workingHours?: WorkingHour[];
   bookingUrl?: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  hideHeaderFooter?: boolean;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function PublicPageRenderer({
@@ -23,9 +31,14 @@ export function PublicPageRenderer({
   appearance,
   services,
   staffList,
+  branches = [],
   workingHours,
   bookingUrl = `/${tenant.slug}/book`,
   deviceViewport,
+  hideHeaderFooter = false,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: PublicPageRendererProps) {
   const { settings, theme } = appearance;
   const templateType = settings.template || 'modern';
@@ -42,6 +55,10 @@ export function PublicPageRenderer({
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'bold':
@@ -54,6 +71,10 @@ export function PublicPageRenderer({
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'modern':
@@ -64,9 +85,14 @@ export function PublicPageRenderer({
             appearance={appearance}
             services={services}
             staffList={staffList}
+            branches={branches}
             workingHours={workingHours}
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
+            hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
     }

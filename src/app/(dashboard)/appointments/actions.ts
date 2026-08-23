@@ -3,6 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { AppointmentStatus, AppointmentWithDetails, Client, Service, Staff, WorkingHour } from '@/types/database';
+import { PersistentNotificationService } from '@/lib/services/persistent-notification.service';
+import { getTenantIdForUser } from '@/lib/services/tenant-context.service';
+
 
 export async function getAppointmentsDataAction() {
   const supabase = await createClient();
@@ -21,13 +24,9 @@ export async function getAppointmentsDataAction() {
     };
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user.id)
-    .single();
+  const tenantId = await getTenantIdForUser(supabase, user);
 
-  if (!profile?.tenant_id) {
+  if (!tenantId) {
     return {
       error: 'No se encontró la empresa/tenant',
       appointments: [],
@@ -37,8 +36,6 @@ export async function getAppointmentsDataAction() {
       workingHoursList: [],
     };
   }
-
-  const tenantId = profile.tenant_id;
 
   // 1. Obtener Citas con datos relacionados
   const { data: appointments, error: appError } = await supabase
@@ -133,9 +130,8 @@ export async function confirmAppointmentAction(appointmentId: string) {
     return { error: 'Error al confirmar la cita: ' + (error?.message || 'Cita no encontrada') };
   }
 
-  // 2. Crear registro de notificación para la Fase 4
+  // 2. Crear notificación persistente en DB
   const clientName = updatedApp.client?.name || 'Cliente';
-  const clientContact = updatedApp.client?.email || updatedApp.client?.phone || '';
   const serviceName = updatedApp.service?.name || 'Servicio';
   const staffName = updatedApp.staff?.name || 'Especialista';
   const appTime = new Date(updatedApp.start_time).toLocaleString('es-CO', {
@@ -143,25 +139,23 @@ export async function confirmAppointmentAction(appointmentId: string) {
     timeStyle: 'short',
   });
 
-  await supabase.from('appointment_notifications').insert({
-    tenant_id: profile.tenant_id,
-    appointment_id: appointmentId,
-    type: 'confirmation',
-    channel: 'system',
-    recipient_name: clientName,
-    recipient_contact: clientContact,
-    title: `Cita Confirmada - ${serviceName}`,
+  await PersistentNotificationService.create(supabase, {
+    tenantId: profile.tenant_id,
+    clientId: updatedApp.client_id,
+    appointmentId,
+    type: 'appointment_confirmed',
+    title: 'Tu cita fue confirmada.',
     message: `Hola ${clientName}, tu cita para ${serviceName} con ${staffName} el ${appTime} ha sido confirmada correctamente.`,
-    status: 'pending',
     metadata: {
-      client_id: updatedApp.client_id,
-      staff_id: updatedApp.staff_id,
-      service_id: updatedApp.service_id,
+      client_name: clientName,
+      service_name: serviceName,
+      staff_name: staffName,
       start_time: updatedApp.start_time,
     },
   });
 
   revalidatePath('/appointments');
+  revalidatePath('/notifications');
   return { success: true, appointment: updatedApp };
 }
 
@@ -216,35 +210,33 @@ export async function cancelAppointmentAction(
     return { error: 'Error al cancelar la cita: ' + (error?.message || 'Cita no encontrada') };
   }
 
-  // 2. Crear registro de notificación para la Fase 4
+  // 2. Crear notificación persistente de cancelación con motivo y reprogramación
   const clientName = updatedApp.client?.name || 'Cliente';
-  const clientContact = updatedApp.client?.email || updatedApp.client?.phone || '';
   const serviceName = updatedApp.service?.name || 'Servicio';
   const appTime = new Date(updatedApp.start_time).toLocaleString('es-CO', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
 
-  await supabase.from('appointment_notifications').insert({
-    tenant_id: profile.tenant_id,
-    appointment_id: appointmentId,
-    type: 'cancellation',
-    channel: 'system',
-    recipient_name: clientName,
-    recipient_contact: clientContact,
-    title: `Cita Cancelada - ${serviceName}`,
+  await PersistentNotificationService.create(supabase, {
+    tenantId: profile.tenant_id,
+    clientId: updatedApp.client_id,
+    appointmentId,
+    type: 'appointment_cancelled',
+    title: 'Tu cita fue cancelada.',
     message: `Hola ${clientName}, tu cita para ${serviceName} agendada el ${appTime} ha sido cancelada. Motivo: "${cancellationReason.trim()}". ${
-      canReschedule ? 'Puedes agendar un nuevo turno cuando lo desees.' : ''
+      canReschedule ? '¿Puede reprogramarse? Sí' : '¿Puede reprogramarse? No'
     }`,
-    status: 'pending',
     metadata: {
       cancellation_reason: cancellationReason.trim(),
       can_reschedule: canReschedule,
-      client_id: updatedApp.client_id,
+      client_name: clientName,
+      service_name: serviceName,
     },
   });
 
   revalidatePath('/appointments');
+  revalidatePath('/notifications');
   return { success: true, appointment: updatedApp };
 }
 
@@ -291,27 +283,37 @@ export async function updateAppointmentStatusAction(
     return { error: 'Error al cambiar estado: ' + (error?.message || 'Cita no encontrada') };
   }
 
-  // Notificación de cambio de estado
+  // Notificación persistente de cambio de estado
   const clientName = updatedApp.client?.name || 'Cliente';
-  const clientContact = updatedApp.client?.email || updatedApp.client?.phone || '';
   const serviceName = updatedApp.service?.name || 'Servicio';
+  const notifType = newStatus === 'completed' ? 'appointment_completed' : 'reservation_changed';
 
-  await supabase.from('appointment_notifications').insert({
-    tenant_id: profile.tenant_id,
-    appointment_id: appointmentId,
-    type: 'status_change',
-    channel: 'system',
-    recipient_name: clientName,
-    recipient_contact: clientContact,
-    title: `Estado de Cita Actualizado: ${newStatus}`,
-    message: `La cita de ${clientName} para ${serviceName} cambió a estado ${newStatus}.`,
-    status: 'pending',
+  const estadoText =
+    newStatus === 'completed'
+      ? 'completada'
+      : newStatus === 'confirmed'
+      ? 'confirmada'
+      : newStatus === 'cancelled'
+      ? 'cancelada'
+      : newStatus;
+
+  await PersistentNotificationService.create(supabase, {
+    tenantId: profile.tenant_id,
+    clientId: updatedApp.client_id,
+    appointmentId,
+    type: notifType,
+    title: `Cita ${estadoText}`,
+    message: `La cita de ${clientName} para ${serviceName} ha sido marcada como ${estadoText}.`,
     metadata: {
       new_status: newStatus,
+      client_name: clientName,
+      service_name: serviceName,
     },
   });
 
   revalidatePath('/appointments');
+  revalidatePath('/notifications');
+
   return { success: true, appointment: updatedApp };
 }
 
@@ -513,19 +515,35 @@ export async function createAdminAppointmentAction(formData: FormData) {
     return { error: 'Error al agendar la cita: ' + (appErr?.message || '') };
   }
 
-  // 6. Registro de Notificación inicial
-  await supabase.from('appointment_notifications').insert({
-    tenant_id: tenantId,
-    appointment_id: newApp.id,
-    type: 'confirmation',
-    channel: 'system',
-    recipient_name: client_name,
-    recipient_contact: client_email || client_phone,
-    title: `Nueva Cita Creada - ${service.name}`,
-    message: `Cita agendada para ${client_name} con ${staff.name} (${service.name}) el ${startDate.toLocaleString('es-CO')}.`,
-    status: 'pending',
+  // 6. Registro de notificación persistente de nueva cita
+  const formattedDate = startDate.toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const formattedTime = startDate.toLocaleTimeString('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  await PersistentNotificationService.create(supabase, {
+    tenantId,
+    clientId,
+    appointmentId: newApp.id,
+    type: 'appointment_created',
+    title: 'Nueva solicitud de cita',
+    message: `Cliente: ${client_name} | Servicio: ${service.name} | Profesional: ${staff.name} | Fecha: ${formattedDate} | Hora: ${formattedTime}`,
+    metadata: {
+      client_name: client_name,
+      service_name: service.name,
+      staff_name: staff.name,
+      appointment_date: formattedDate,
+      appointment_time: formattedTime,
+    },
   });
 
   revalidatePath('/appointments');
+  revalidatePath('/notifications');
   return { success: true, appointment: newApp };
 }
+

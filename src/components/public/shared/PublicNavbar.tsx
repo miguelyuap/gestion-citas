@@ -1,130 +1,279 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Menu, X, Calendar } from 'lucide-react';
-import { Container } from './Container';
-import { ThemeButton } from './ThemeButton';
+import React, { useState, useEffect } from 'react';
+import { Calendar, ChevronDown, User, LogOut, LogIn } from 'lucide-react';
 import { Tenant } from '@/types/database';
+import { ClientNotificationsDropdown } from '../client/ClientNotificationsDropdown';
+import { logoutClientAction } from '@/app/(public)/[slug]/client-auth';
+import { useRouter } from 'next/navigation';
 
 interface PublicNavbarProps {
   tenant: Tenant;
-  bookingUrl: string;
+  bookingUrl?: string;
+  authenticatedClient?: any;
+  activeView?: 'landing' | 'booking' | 'appointments' | 'profile';
+  onNavigateView?: (view: 'landing' | 'booking' | 'appointments' | 'profile') => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
 }
 
-export function PublicNavbar({ tenant, bookingUrl, deviceViewport }: PublicNavbarProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export function PublicNavbar({
+  tenant,
+  authenticatedClient,
+  activeView = 'landing',
+  onNavigateView,
+  onOpenAuth,
+}: PublicNavbarProps) {
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const isMobileMode = deviceViewport === 'mobile';
-  const isTabletMode = deviceViewport === 'tablet';
-  const isDesktopMode = deviceViewport === 'desktop';
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  // Ajustes dinámicos de gaps y visibilidad según viewport
-  const navGapClass = isDesktopMode ? 'gap-3 sm:gap-4' : 'gap-4 sm:gap-6';
+  const isHeroPage = activeView === 'landing';
+  const transparent = isHeroPage && !scrolled;
+
+  const handleLogout = async () => {
+    await logoutClientAction(tenant.slug);
+    router.refresh();
+  };
+
+  const handleNav = (view: 'landing' | 'booking' | 'appointments' | 'profile') => {
+    if (onNavigateView) {
+      onNavigateView(view);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-[var(--background)]/90 border-b border-[var(--foreground)]/10 transition-colors duration-200">
-      <Container>
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 overflow-hidden">
-          {/* Logo / Brand */}
-          <Link href={`/${tenant.slug}`} className="flex items-center gap-2 sm:gap-3 group flex-shrink-0 min-w-0">
+    <header
+      className="sticky top-0 z-50 transition-all duration-300 font-[var(--font-sans)]"
+      style={{
+        background: transparent ? 'rgba(12,10,26,0.6)' : 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(14px)',
+        borderBottom: transparent ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--border,#E4E2EC)',
+        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.08)' : 'none',
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo & Brand Name */}
+          <button
+            onClick={() => handleNav('landing')}
+            className="flex items-center gap-2.5 group focus:outline-none text-left"
+          >
             {tenant.logo_url ? (
               <img
                 src={tenant.logo_url}
                 alt={tenant.name}
-                className="h-7 sm:h-9 w-auto object-contain rounded-lg flex-shrink-0"
+                className="w-8 h-8 rounded-xl object-cover transition-transform group-hover:scale-105 shadow-sm"
               />
             ) : (
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[var(--primary)] text-white flex items-center justify-center font-extrabold text-sm sm:text-base shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
-                {tenant.name.charAt(0).toUpperCase()}
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-md"
+                style={{ background: 'linear-gradient(135deg, #4F35D2 0%, #7C3AED 100%)' }}
+              >
+                <Calendar className="w-4 h-4 text-white" />
               </div>
             )}
-            <span className="font-extrabold text-sm sm:text-lg tracking-tight text-[var(--foreground)] truncate max-w-[110px] sm:max-w-[160px]">
+            <span
+              className={`font-display text-lg transition-colors ${
+                transparent ? 'text-white' : 'text-[var(--foreground,#18181B)]'
+              }`}
+            >
               {tenant.name}
             </span>
-          </Link>
+          </button>
 
-          {/* Desktop / Tablet Nav (oculto solo en mobile) */}
-          {!isMobileMode && (
-            <nav className={`${isTabletMode ? 'hidden sm:flex' : 'hidden md:flex'} items-center ${navGapClass} text-xs font-semibold text-[var(--muted)] flex-shrink-0`}>
-              <a href="#services" className="hover:text-[var(--foreground)] transition-colors whitespace-nowrap">
-                Servicios
-              </a>
-              <a href="#staff" className="hover:text-[var(--foreground)] transition-colors whitespace-nowrap">
-                Equipo
-              </a>
-              <a href="#about" className="hover:text-[var(--foreground)] transition-colors whitespace-nowrap">
-                Nosotros
-              </a>
-              <a href="#contact" className="hover:text-[var(--foreground)] transition-colors whitespace-nowrap">
-                Contacto
-              </a>
-            </nav>
-          )}
-
-          {/* CTA & Mobile Toggle */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {!isMobileMode && (
-              <div className={`${isTabletMode ? 'hidden sm:flex' : 'hidden md:flex'} items-center flex-shrink-0`}>
-                <ThemeButton asAnchor href={bookingUrl} size="sm" className="px-3 py-1.5 text-xs font-extrabold whitespace-nowrap flex-shrink-0">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Reservar Cita
-                </ThemeButton>
-              </div>
-            )}
-
-            {/* Mobile / Compact menu button */}
+          {/* Desktop Navigation Options */}
+          <nav className="hidden md:flex items-center gap-1">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`${isMobileMode ? 'flex' : isTabletMode ? 'flex sm:hidden' : 'md:hidden'} p-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors border border-[var(--foreground)]/10 flex-shrink-0`}
-              aria-label="Abrir menú"
+              onClick={() => handleNav('landing')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                transparent
+                  ? activeView === 'landing'
+                    ? 'bg-white/15 text-white font-semibold'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                  : activeView === 'landing'
+                  ? 'bg-[var(--secondary,#F0EFFE)] text-[var(--secondary-foreground,#4F35D2)] font-semibold'
+                  : 'text-[var(--muted-foreground,#71717A)] hover:text-[var(--foreground)] hover:bg-[var(--secondary,#F0EFFE)]'
+              }`}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              Inicio
             </button>
-          </div>
-        </div>
-      </Container>
 
-      {/* Mobile drawer */}
-      {mobileMenuOpen && (
-        <div className="bg-[var(--surface)] border-b border-[var(--foreground)]/10 px-4 pt-3 pb-6 space-y-2 shadow-2xl">
-          <a
-            href="#services"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-xl text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
-          >
-            Servicios
-          </a>
-          <a
-            href="#staff"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-xl text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
-          >
-            Equipo
-          </a>
-          <a
-            href="#about"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-xl text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
-          >
-            Nosotros
-          </a>
-          <a
-            href="#contact"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-xl text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
-          >
-            Contacto
-          </a>
-          <div className="pt-2">
-            <ThemeButton asAnchor href={bookingUrl} size="sm" className="w-full justify-center text-xs font-bold py-2.5">
-              <Calendar className="w-4 h-4" />
-              Reservar Cita
-            </ThemeButton>
+            <button
+              onClick={() => {
+                if (activeView !== 'landing' && onNavigateView) {
+                  onNavigateView('landing');
+                  setTimeout(() => {
+                    const el = document.getElementById('services');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 150);
+                } else {
+                  const el = document.getElementById('services');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                transparent
+                  ? 'text-white/70 hover:text-white hover:bg-white/10'
+                  : 'text-[var(--muted-foreground,#71717A)] hover:text-[var(--foreground)] hover:bg-[var(--secondary,#F0EFFE)]'
+              }`}
+            >
+              Servicios
+            </button>
+
+            <button
+              onClick={() => {
+                if (activeView !== 'landing' && onNavigateView) {
+                  onNavigateView('landing');
+                  setTimeout(() => {
+                    const el = document.getElementById('specialists') || document.getElementById('staff');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 150);
+                } else {
+                  const el = document.getElementById('specialists') || document.getElementById('staff');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                transparent
+                  ? 'text-white/70 hover:text-white hover:bg-white/10'
+                  : 'text-[var(--muted-foreground,#71717A)] hover:text-[var(--foreground)] hover:bg-[var(--secondary,#F0EFFE)]'
+              }`}
+            >
+              Especialistas
+            </button>
+
+            {authenticatedClient && (
+              <button
+                onClick={() => handleNav('appointments')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  transparent
+                    ? 'text-white/70 hover:text-white hover:bg-white/10'
+                    : activeView === 'appointments'
+                    ? 'bg-[var(--secondary,#F0EFFE)] text-[var(--secondary-foreground,#4F35D2)] font-semibold'
+                    : 'text-[var(--muted-foreground,#71717A)] hover:text-[var(--foreground)] hover:bg-[var(--secondary,#F0EFFE)]'
+                }`}
+              >
+                Mis citas
+              </button>
+            )}
+          </nav>
+
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {authenticatedClient ? (
+              <>
+                <ClientNotificationsDropdown tenantSlug={tenant.slug} />
+
+                <div className="relative">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className={`flex items-center gap-2 p-1.5 pl-3 rounded-xl transition-colors ${
+                      transparent ? 'hover:bg-white/10' : 'hover:bg-[var(--secondary,#F0EFFE)]'
+                    }`}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full overflow-hidden border-2 flex items-center justify-center font-bold text-xs bg-[var(--primary,#4F35D2)] text-white"
+                      style={{ borderColor: transparent ? 'rgba(255,255,255,0.3)' : 'var(--border,#E4E2EC)' }}
+                    >
+                      {authenticatedClient.name?.charAt(0)?.toUpperCase() || 'C'}
+                    </div>
+                    <span className={`text-sm font-medium ${transparent ? 'text-white' : 'text-[var(--foreground,#18181B)]'}`}>
+                      {authenticatedClient.name?.split(' ')[0]}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 ${transparent ? 'text-white/60' : 'text-[var(--muted-foreground)]'}`} />
+                  </button>
+
+                  {menuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-[var(--card,#ffffff)] rounded-2xl shadow-xl border border-[var(--border,#E4E2EC)] overflow-hidden animate-scale-in z-50">
+                      <button
+                        onClick={() => {
+                          handleNav('profile');
+                          setMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-[var(--foreground,#18181B)] hover:bg-[var(--secondary,#F0EFFE)] transition-colors"
+                      >
+                        <User className="w-4 h-4 text-[var(--primary,#4F35D2)]" />
+                        Mi perfil
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleNav('appointments');
+                          setMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-[var(--foreground,#18181B)] hover:bg-[var(--secondary,#F0EFFE)] transition-colors"
+                      >
+                        <Calendar className="w-4 h-4 text-[var(--primary,#4F35D2)]" />
+                        Mis citas
+                      </button>
+                      <div className="border-t border-[var(--border,#E4E2EC)]" />
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-[var(--danger,#EF4444)] hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {onOpenAuth && (
+                  <button
+                    onClick={() => onOpenAuth('login')}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      transparent ? 'text-white/70 hover:text-white' : 'text-[var(--foreground)] hover:text-[var(--primary)]'
+                    }`}
+                  >
+                    Iniciar sesión
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (!authenticatedClient && onOpenAuth) {
+                      onOpenAuth('login');
+                    } else {
+                      handleNav('booking');
+                    }
+                  }}
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl text-white transition-all hover:opacity-90 active:scale-95 shadow-md"
+                  style={{
+                    backgroundColor: 'var(--primary, #4F35D2)',
+                  }}
+                >
+                  Agendar cita
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Header Action */}
+          <div className="flex md:hidden items-center gap-2">
+            {authenticatedClient && (
+              <ClientNotificationsDropdown tenantSlug={tenant.slug} />
+            )}
+            {!authenticatedClient && onOpenAuth && (
+              <button
+                onClick={() => onOpenAuth('login')}
+                className={`text-sm font-semibold ${transparent ? 'text-white' : 'text-[var(--primary,#4F35D2)]'}`}
+              >
+                Entrar
+              </button>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

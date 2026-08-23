@@ -1,6 +1,6 @@
 export * from './theme';
 
-export type UserRole = 'owner' | 'admin' | 'staff';
+export type UserRole = 'owner' | 'admin' | 'staff' | 'client';
 export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 
 export interface Tenant {
@@ -27,6 +27,17 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface Branch {
+  id: string;
+  tenant_id: string;
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Service {
   id: string;
   tenant_id: string;
@@ -44,6 +55,7 @@ export interface Staff {
   id: string;
   tenant_id: string;
   profile_id?: string | null;
+  branch_id?: string | null;
   name: string;
   email?: string | null;
   phone?: string | null;
@@ -54,9 +66,10 @@ export interface Staff {
 }
 
 export interface WorkingHour {
-  id: string;
+  id?: string;
   tenant_id: string;
   staff_id?: string | null;
+  branch_id?: string | null;
   day_of_week: number; // 0=Sunday, 1=Monday, ...
   start_time: string; // HH:mm:ss
   end_time: string; // HH:mm:ss
@@ -68,6 +81,7 @@ export interface WorkingHour {
 export interface Client {
   id: string;
   tenant_id: string;
+  user_id?: string | null;
   name: string;
   email: string;
   phone: string;
@@ -80,6 +94,7 @@ export interface Appointment {
   tenant_id: string;
   service_id: string;
   staff_id: string;
+  branch_id?: string | null;
   client_id: string;
   start_time: string; // ISO string
   end_time: string; // ISO string
@@ -96,6 +111,7 @@ export interface AppointmentWithDetails extends Appointment {
   client?: Client | null;
   service?: Service | null;
   staff?: Staff | null;
+  branch?: Branch | null;
 }
 
 export interface AppointmentNotification {
@@ -114,6 +130,37 @@ export interface AppointmentNotification {
   sent_at?: string | null;
 }
 
+export type NotificationType =
+  | 'appointment_created'
+  | 'appointment_confirmed'
+  | 'appointment_cancelled'
+  | 'appointment_completed'
+  | 'reservation_changed';
+
+export interface PersistentNotification {
+  id: string;
+  tenant_id: string;
+  client_id?: string | null;
+  appointment_id?: string | null;
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  metadata?: {
+    cancellation_reason?: string | null;
+    can_reschedule?: boolean | null;
+    client_name?: string | null;
+    service_name?: string | null;
+    staff_name?: string | null;
+    appointment_date?: string | null;
+    appointment_time?: string | null;
+    [key: string]: any;
+  } | null;
+  created_at: string;
+  client?: Client | null;
+  appointment?: Appointment | null;
+}
+
 export interface TimeSlot {
   start: Date;
   end: Date;
@@ -122,4 +169,3 @@ export interface TimeSlot {
   available: boolean;
   reason?: string;
 }
-

@@ -2,12 +2,19 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import { PublicPageRenderer } from '@/components/public/templates/PublicPageRenderer';
+import { ClientPortalContainer } from '@/components/public/client/ClientPortalContainer';
+import { getCurrentClientAction } from './client-auth';
 import { CompleteTenantAppearance } from '@/types/theme';
 import { DEFAULT_COMPLETE_APPEARANCE } from '@/lib/theme/presets';
 
 interface PublicTenantPageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{
+    view?: 'landing' | 'booking' | 'appointments' | 'profile';
+    serviceId?: string;
+    staffId?: string;
+    branchId?: string;
+  }>;
 }
 
 export async function generateMetadata({ params }: PublicTenantPageProps): Promise<Metadata> {
@@ -33,8 +40,17 @@ export async function generateMetadata({ params }: PublicTenantPageProps): Promi
   };
 }
 
-export default async function PublicTenantPage({ params }: PublicTenantPageProps) {
+export default async function PublicTenantPage({ params, searchParams }: PublicTenantPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const serviceIdParam = resolvedSearchParams.serviceId;
+  const staffIdParam = resolvedSearchParams.staffId;
+  const branchIdParam = resolvedSearchParams.branchId;
+
+  let viewParam: 'landing' | 'booking' | 'appointments' | 'profile' = 'landing';
+  if (resolvedSearchParams.view === 'booking' || resolvedSearchParams.view === 'appointments' || resolvedSearchParams.view === 'profile') {
+    viewParam = resolvedSearchParams.view;
+  }
 
   if (!slug) {
     notFound();
@@ -56,7 +72,7 @@ export default async function PublicTenantPage({ params }: PublicTenantPageProps
 
   const tenantId = tenant.id;
 
-  // 2. Cargar configuración completa de apariencia del tenant desde Supabase
+  // 2. Cargar datos del tenant y cliente autenticado en paralelo
   const [
     { data: settings },
     { data: theme },
@@ -66,7 +82,10 @@ export default async function PublicTenantPage({ params }: PublicTenantPageProps
     { data: testimonials },
     { data: services },
     { data: staff },
+    { data: branches },
     { data: workingHours },
+    { data: appointments },
+    clientData,
   ] = await Promise.all([
     supabase.from('tenant_settings').select('*').eq('tenant_id', tenantId).maybeSingle(),
     supabase.from('tenant_theme').select('*').eq('tenant_id', tenantId).maybeSingle(),
@@ -76,7 +95,15 @@ export default async function PublicTenantPage({ params }: PublicTenantPageProps
     supabase.from('tenant_testimonials').select('*').eq('tenant_id', tenantId).order('display_order', { ascending: true }),
     supabase.from('services').select('*').eq('tenant_id', tenantId).eq('is_active', true),
     supabase.from('staff').select('*').eq('tenant_id', tenantId).eq('is_active', true),
+    supabase.from('branches').select('*').eq('tenant_id', tenantId).eq('is_active', true),
     supabase.from('working_hours').select('*').eq('tenant_id', tenantId),
+    supabase
+      .from('appointments')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .neq('status', 'cancelled')
+      .gte('start_time', new Date().toISOString()),
+    getCurrentClientAction(slug),
   ]);
 
   const appearance: CompleteTenantAppearance = {
@@ -98,13 +125,19 @@ export default async function PublicTenantPage({ params }: PublicTenantPageProps
   };
 
   return (
-    <PublicPageRenderer
+    <ClientPortalContainer
       tenant={tenant}
       appearance={appearance}
       services={services || []}
       staffList={staff || []}
+      branches={branches || []}
       workingHours={workingHours || []}
-      bookingUrl={`/${tenant.slug}/book`}
+      appointments={appointments || []}
+      initialClientData={clientData}
+      initialView={viewParam}
+      initialStaffId={staffIdParam}
+      initialServiceId={serviceIdParam}
+      initialBranchId={branchIdParam}
     />
   );
 }
