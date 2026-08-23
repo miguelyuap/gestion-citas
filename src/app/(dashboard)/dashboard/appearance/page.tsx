@@ -811,6 +811,24 @@ export default function AppearanceDashboardPage() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    URL Imagen "Sobre Nosotros"
+                  </label>
+                  <input
+                    type="text"
+                    value={appearance.settings.about_image_url || ''}
+                    onChange={(e) =>
+                      setAppearance((prev) => ({
+                        ...prev,
+                        settings: { ...prev.settings, about_image_url: e.target.value },
+                      }))
+                    }
+                    placeholder="https://..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -871,6 +889,10 @@ export default function AppearanceDashboardPage() {
           {/* PESTAÑA 4: REDES SOCIALES */}
           {activeTab === 'socials' && (
             <div className="space-y-4 text-slate-200">
+              <p className="text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                Los canales y redes configurados aquí se mostrarán automáticamente en la sección de Contacto y en el pie de página del dashboard de tus clientes.
+              </p>
+
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-emerald-400" /> WhatsApp Directo
@@ -939,6 +961,96 @@ export default function AppearanceDashboardPage() {
                     }))
                   }
                   placeholder="https://tiktok.com/@mi-negocio"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Twitter / X (URL)
+                </label>
+                <input
+                  type="text"
+                  value={appearance.socials?.twitter || ''}
+                  onChange={(e) =>
+                    setAppearance((prev) => ({
+                      ...prev,
+                      socials: { ...prev.socials, twitter: e.target.value },
+                    }))
+                  }
+                  placeholder="https://x.com/mi-negocio"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  YouTube (URL)
+                </label>
+                <input
+                  type="text"
+                  value={appearance.socials?.youtube || ''}
+                  onChange={(e) =>
+                    setAppearance((prev) => ({
+                      ...prev,
+                      socials: { ...prev.socials, youtube: e.target.value },
+                    }))
+                  }
+                  placeholder="https://youtube.com/@mi-canal"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  LinkedIn (URL)
+                </label>
+                <input
+                  type="text"
+                  value={appearance.socials?.linkedin || ''}
+                  onChange={(e) =>
+                    setAppearance((prev) => ({
+                      ...prev,
+                      socials: { ...prev.socials, linkedin: e.target.value },
+                    }))
+                  }
+                  placeholder="https://linkedin.com/company/mi-negocio"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Sitio Web / URL Oficial
+                </label>
+                <input
+                  type="text"
+                  value={appearance.socials?.website || ''}
+                  onChange={(e) =>
+                    setAppearance((prev) => ({
+                      ...prev,
+                      socials: { ...prev.socials, website: e.target.value },
+                    }))
+                  }
+                  placeholder="https://mi-negocio.com"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Telegram (URL)
+                </label>
+                <input
+                  type="text"
+                  value={appearance.socials?.telegram || ''}
+                  onChange={(e) =>
+                    setAppearance((prev) => ({
+                      ...prev,
+                      socials: { ...prev.socials, telegram: e.target.value },
+                    }))
+                  }
+                  placeholder="https://t.me/mi-negocio"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
                 />
               </div>

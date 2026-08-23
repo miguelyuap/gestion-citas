@@ -120,10 +120,12 @@ interface AppProps {
   citasHoyData?: Array<any>;
   tenantName?: string;
   userName?: string;
+  userEmail?: string;
+  userRole?: string;
   logoUrl?: string | null;
 }
 
-export default function App({ initialLoggedIn = false, kpis, citasHoyData, tenantName, userName, logoUrl }: AppProps) {
+export default function App({ initialLoggedIn = false, kpis, citasHoyData, tenantName, userName, userEmail, userRole, logoUrl }: AppProps) {
   const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(initialLoggedIn);
   const [page, setPage] = useState<Page>("dashboard");
@@ -181,7 +183,7 @@ export default function App({ initialLoggedIn = false, kpis, citasHoyData, tenan
       case "apariencia": return <Apariencia />;
       case "usuarios": return <Usuarios />;
       case "configuracion": return <Configuracion />;
-      case "suscripcion": return <Suscripcion />;
+      case "suscripcion": return <Suscripcion userName={userName} userEmail={userEmail} />;
       case "ayuda": return <AyudaPage />;
       default: return <Dashboard onNavigate={navigate} kpis={kpis} citasHoyData={citasHoyData} />;
     }
@@ -201,6 +203,9 @@ export default function App({ initialLoggedIn = false, kpis, citasHoyData, tenan
         mobileOpen={mobileMenuOpen}
         onMobileClose={() => setMobileMenuOpen(false)}
         tenantName={tenantName}
+        userName={userName}
+        userEmail={userEmail}
+        userRole={userRole}
         logoUrl={logoUrl}
       />
 
@@ -211,6 +216,9 @@ export default function App({ initialLoggedIn = false, kpis, citasHoyData, tenan
           onSucursalChange={setSucursal}
           onMenuToggle={handleMenuToggle}
           onNavigate={navigate}
+          userName={userName}
+          userEmail={userEmail}
+          userRole={userRole}
         />
         <main style={{ flex: 1, overflowY: "auto" }}>
           {renderPage()}

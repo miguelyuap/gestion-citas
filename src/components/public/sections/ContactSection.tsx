@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { Container } from '../shared/Container';
 import { SectionHeading } from '../shared/SectionHeading';
 import { Tenant, WorkingHour, Branch } from '@/types/database';
-import { TenantSocials } from '@/types/theme';
+import { TenantSettings, TenantSocials } from '@/types/theme';
 import { Phone, Mail, Clock, MapPin, MessageCircle, Building2 } from 'lucide-react';
 
 interface ContactSectionProps {
   tenant: Tenant;
+  settings?: TenantSettings;
   socials?: TenantSocials;
   branches?: Branch[];
   workingHours?: WorkingHour[];
@@ -17,8 +18,8 @@ interface ContactSectionProps {
 
 const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-export function ContactSection({ tenant, socials, branches = [], workingHours = [], deviceViewport }: ContactSectionProps) {
-  const whatsappNumber = socials?.whatsapp || tenant.phone;
+export function ContactSection({ tenant, settings, socials, branches = [], workingHours = [], deviceViewport }: ContactSectionProps) {
+  const whatsappNumber = socials?.whatsapp || settings?.whatsapp_number || tenant.phone;
   const activeBranches = branches.filter((b) => b.is_active);
 
   // Tab activo de sucursal si hay múltiples
@@ -27,6 +28,7 @@ export function ContactSection({ tenant, socials, branches = [], workingHours = 
   );
 
   const selectedBranch = activeBranches.find((b) => b.id === selectedBranchId) || activeBranches[0];
+  const locationAddress = selectedBranch?.address || (tenant as any).address;
 
   // Filtrar horarios por la sucursal seleccionada (o generales si no hay específica)
   const branchWorkingHours = React.useMemo(() => {
@@ -120,16 +122,107 @@ export function ContactSection({ tenant, socials, branches = [], workingHours = 
                 </div>
               )}
 
-              {selectedBranch?.address && (
+              {locationAddress && (
                 <div className="flex items-center gap-4 text-[var(--muted-foreground)]">
                   <div className="w-10 h-10 rounded-xl bg-[var(--primary,#4F35D2)]/10 text-[var(--primary,#4F35D2)] flex items-center justify-center shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <span className="block text-xs font-semibold text-[var(--foreground)] uppercase tracking-wider">
-                      Ubicación {activeBranches.length > 1 ? `(${selectedBranch.name})` : ''}
+                      Ubicación {activeBranches.length > 1 && selectedBranch?.name ? `(${selectedBranch.name})` : ''}
                     </span>
-                    <span className="truncate block text-sm text-[var(--foreground)] mt-0.5">{selectedBranch.address}</span>
+                    <span className="truncate block text-sm text-[var(--foreground)] mt-0.5">{locationAddress}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Bloque de Redes Sociales Completo */}
+              {socials && Object.values(socials).some((val) => val && typeof val === 'string' && val.trim() !== '') && (
+                <div className="pt-4 border-t border-[var(--border,#E4E2EC)] space-y-2.5">
+                  <span className="block text-xs font-semibold text-[var(--foreground)] uppercase tracking-wider">
+                    Redes Sociales y Canales Oficiales
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {socials.instagram && (
+                      <a
+                        href={socials.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-pink-500/10 text-pink-600 hover:bg-pink-500 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        Instagram
+                      </a>
+                    )}
+                    {socials.facebook && (
+                      <a
+                        href={socials.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        Facebook
+                      </a>
+                    )}
+                    {socials.tiktok && (
+                      <a
+                        href={socials.tiktok}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-900/10 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-900 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        TikTok
+                      </a>
+                    )}
+                    {socials.twitter && (
+                      <a
+                        href={socials.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-sky-500/10 text-sky-600 hover:bg-sky-500 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        Twitter / X
+                      </a>
+                    )}
+                    {socials.youtube && (
+                      <a
+                        href={socials.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-red-600/10 text-red-600 hover:bg-red-600 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        YouTube
+                      </a>
+                    )}
+                    {socials.linkedin && (
+                      <a
+                        href={socials.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-blue-700/10 text-blue-700 hover:bg-blue-700 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    {socials.website && (
+                      <a
+                        href={socials.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-purple-600/10 text-purple-600 hover:bg-purple-600 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        Sitio Web
+                      </a>
+                    )}
+                    {socials.telegram && (
+                      <a
+                        href={socials.telegram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-sky-400/10 text-sky-500 hover:bg-sky-400 hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+                      >
+                        Telegram
+                      </a>
+                    )}
                   </div>
                 </div>
               )}

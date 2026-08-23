@@ -23,6 +23,12 @@ interface TemplateProps {
   bookingUrl: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
   hideHeaderFooter?: boolean;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function ModernTemplate({
@@ -35,6 +41,9 @@ export function ModernTemplate({
   bookingUrl,
   deviceViewport,
   hideHeaderFooter = false,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: TemplateProps) {
   const { settings, theme, socials, testimonials } = appearance;
   const buttonStyle = theme.button_style || 'rounded';
@@ -51,22 +60,33 @@ export function ModernTemplate({
           buttonStyle={buttonStyle}
           variant="modern"
           deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
         />
         <ServicesSection
           services={services}
           bookingUrl={bookingUrl}
           buttonStyle={buttonStyle}
           deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
         />
         <StaffSection
           staffList={staffList}
           bookingUrl={bookingUrl}
+          buttonStyle={buttonStyle}
           deviceViewport={deviceViewport}
+          onNavigateView={onNavigateView}
+          onOpenAuth={onOpenAuth}
+          isAuthenticated={isAuthenticated}
         />
         <HowItWorksSection />
         <TestimonialsSection testimonials={testimonials} deviceViewport={deviceViewport} />
         <ContactSection
           tenant={tenant}
+          settings={settings}
           socials={socials}
           branches={branches}
           workingHours={workingHours}

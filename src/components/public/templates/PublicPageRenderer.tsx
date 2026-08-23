@@ -18,6 +18,12 @@ interface PublicPageRendererProps {
   bookingUrl?: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
   hideHeaderFooter?: boolean;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function PublicPageRenderer({
@@ -30,6 +36,9 @@ export function PublicPageRenderer({
   bookingUrl = `/${tenant.slug}/book`,
   deviceViewport,
   hideHeaderFooter = false,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: PublicPageRendererProps) {
   const { settings, theme } = appearance;
   const templateType = settings.template || 'modern';
@@ -47,6 +56,9 @@ export function PublicPageRenderer({
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
             hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'bold':
@@ -60,6 +72,9 @@ export function PublicPageRenderer({
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
             hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'modern':
@@ -75,6 +90,9 @@ export function PublicPageRenderer({
             bookingUrl={bookingUrl}
             deviceViewport={deviceViewport}
             hideHeaderFooter={hideHeaderFooter}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
     }

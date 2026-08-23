@@ -52,10 +52,26 @@ export function ClientPortalContainer({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [clientData, setClientData] = useState(initialClientData);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | undefined>(initialServiceId);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>(initialStaffId);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | undefined>(initialBranchId);
+  const [pendingBooking, setPendingBooking] = useState<{
+    view: 'booking';
+    serviceId?: string;
+    staffId?: string;
+    branchId?: string;
+  } | null>(null);
 
   React.useEffect(() => {
     setClientData(initialClientData);
   }, [initialClientData]);
+
+  React.useEffect(() => {
+    if (initialView === 'booking' && !initialClientData.authenticated) {
+      setAuthModalTab('login');
+      setAuthModalOpen(true);
+    }
+  }, [initialView, initialClientData.authenticated]);
 
   React.useEffect(() => {
     const handleFocus = () => {
@@ -72,11 +88,33 @@ export function ClientPortalContainer({
     setAuthModalOpen(true);
   };
 
-  const handleNavigateView = (view: 'landing' | 'booking' | 'appointments' | 'profile') => {
+  const handleNavigateView = (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => {
     if ((view === 'booking' || view === 'appointments' || view === 'profile') && !clientData.authenticated) {
+      if (view === 'booking') {
+        setPendingBooking({
+          view: 'booking',
+          serviceId: options?.serviceId,
+          staffId: options?.staffId,
+          branchId: options?.branchId,
+        });
+      }
       handleOpenAuth('login');
       return;
     }
+
+    if (options?.serviceId !== undefined) {
+      setSelectedServiceId(options.serviceId);
+    }
+    if (options?.staffId !== undefined) {
+      setSelectedStaffId(options.staffId);
+    }
+    if (options?.branchId !== undefined) {
+      setSelectedBranchId(options.branchId);
+    }
+
     if (view === 'landing') {
       if (typeof window !== 'undefined' && (window.location.pathname.includes('/book') || window.location.search)) {
         window.location.href = `/${tenant.slug}`;
@@ -85,7 +123,14 @@ export function ClientPortalContainer({
     }
     setCurrentView(view);
     if (typeof window !== 'undefined') {
-      const newUrl = view === 'landing' ? `/${tenant.slug}` : `/${tenant.slug}?view=${view}`;
+      let queryParams = view === 'landing' ? '' : `?view=${view}`;
+      const sId = options?.serviceId ?? selectedServiceId;
+      const stId = options?.staffId ?? selectedStaffId;
+      if (view === 'booking') {
+        if (sId) queryParams += `&serviceId=${sId}`;
+        if (stId) queryParams += `&staffId=${stId}`;
+      }
+      const newUrl = view === 'landing' ? `/${tenant.slug}` : `/${tenant.slug}${queryParams}`;
       window.history.pushState({ view }, '', newUrl);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -121,6 +166,9 @@ export function ClientPortalContainer({
               workingHours={workingHours}
               bookingUrl={`/${tenant.slug}/book`}
               hideHeaderFooter={true}
+              onNavigateView={handleNavigateView}
+              onOpenAuth={handleOpenAuth}
+              isAuthenticated={clientData.authenticated}
             />
           )}
 
@@ -141,9 +189,9 @@ export function ClientPortalContainer({
                   onViewAppointments={() => handleNavigateView('appointments')}
                   onNavigateHome={handleNavigateHome}
                   onOpenAuth={handleOpenAuth}
-                  initialStaffId={initialStaffId}
-                  initialServiceId={initialServiceId}
-                  initialBranchId={initialBranchId}
+                  initialStaffId={selectedStaffId}
+                  initialServiceId={selectedServiceId}
+                  initialBranchId={selectedBranchId}
                 />
               </div>
             </div>
@@ -201,6 +249,15 @@ export function ClientPortalContainer({
                 tenant_id: tenant.id,
               },
             });
+            if (pendingBooking) {
+              if (pendingBooking.serviceId) setSelectedServiceId(pendingBooking.serviceId);
+              if (pendingBooking.staffId) setSelectedStaffId(pendingBooking.staffId);
+              if (pendingBooking.branchId) setSelectedBranchId(pendingBooking.branchId);
+              setCurrentView(pendingBooking.view);
+              setPendingBooking(null);
+            } else if (currentView === 'landing' && initialView === 'booking') {
+              setCurrentView('booking');
+            }
             router.refresh();
           }}
         />

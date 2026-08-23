@@ -11,6 +11,12 @@ interface StaffSectionProps {
   bookingUrl: string;
   buttonStyle?: ButtonStyleType;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 const DEFAULT_SPECIALIST_PHOTOS = [
@@ -24,12 +30,26 @@ export function StaffSection({
   staffList,
   bookingUrl,
   deviceViewport,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: StaffSectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   if (!staffList || staffList.length === 0) {
     return null;
   }
+
+  const handleStaffClick = (e: React.MouseEvent, staffId: string) => {
+    e.preventDefault();
+    if (onNavigateView) {
+      onNavigateView('booking', { staffId });
+    } else if (!isAuthenticated && onOpenAuth) {
+      onOpenAuth('login');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = `${bookingUrl}?staffId=${staffId}`;
+    }
+  };
 
   // 6 especialistas por página en escritorio / tablet, 3 en móvil
   const itemsPerPage = deviceViewport === 'mobile' ? 3 : 6;
@@ -84,13 +104,13 @@ export function StaffSection({
           {displayedStaff.map((staff, idx) => {
             const photoUrl = staff.avatar_url || DEFAULT_SPECIALIST_PHOTOS[idx % DEFAULT_SPECIALIST_PHOTOS.length];
             const firstName = staff.name.split(' ')[0];
-            const itemBookingUrl = `${bookingUrl}?staffId=${staff.id}`;
 
             return (
-              <a
+              <button
+                type="button"
                 key={staff.id}
-                href={itemBookingUrl}
-                className="group relative rounded-2xl overflow-hidden aspect-[4/3.8] cursor-pointer bg-zinc-900 shadow-xl border border-transparent hover:border-[var(--secondary,#8B5CF6)]/50 hover:shadow-2xl hover:shadow-[var(--secondary,#8B5CF6)]/25 transition-all duration-300 focus:outline-none block"
+                onClick={(e) => handleStaffClick(e, staff.id)}
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3.8] cursor-pointer bg-zinc-900 shadow-xl border border-transparent hover:border-[var(--secondary,#8B5CF6)]/50 hover:shadow-2xl hover:shadow-[var(--secondary,#8B5CF6)]/25 transition-all duration-300 focus:outline-none block w-full text-left"
               >
                 {/* Photo */}
                 <img
@@ -140,7 +160,7 @@ export function StaffSection({
                     Agendar con {firstName}
                   </div>
                 </div>
-              </a>
+              </button>
             );
           })}
         </div>

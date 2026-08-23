@@ -71,7 +71,7 @@ export const CHART_DATA = [
 ];
 
 export const USUARIOS = [
-  { id: 1, nombre: "Pedro Álvarez", correo: "pedro@agendapro.cl", rol: "Administrador", ultimoAcceso: "Hace 2 minutos", estado: "Activo" },
+  { id: 1, nombre: "Administrador General", correo: "admin@minegocio.com", rol: "Administrador", ultimoAcceso: "Hace 2 minutos", estado: "Activo" },
   { id: 2, nombre: "María Gonzalez", correo: "maria@agendapro.cl", rol: "Gerente", ultimoAcceso: "Hace 1 hora", estado: "Activo" },
   { id: 3, nombre: "Laura Martínez", correo: "laura@agendapro.cl", rol: "Profesional", ultimoAcceso: "Hace 3 horas", estado: "Activo" },
   { id: 4, nombre: "Carlos Rodríguez", correo: "carlos@agendapro.cl", rol: "Profesional", ultimoAcceso: "Ayer", estado: "Activo" },

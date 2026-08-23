@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createStandaloneClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { registerClientShared } from '@/lib/services/client-registration.service';
 
@@ -21,7 +21,7 @@ export interface ClientLoginInput {
 }
 
 /**
- * Registra a un nuevo cliente en el tenant específico usando el servicio compartido
+ * Registra a un nuevo cliente en el tenant específico usando el servicio compartido aislado
  */
 export async function registerClientAction(input: ClientRegisterInput) {
   const { slug, name, lastName, email, phone, password } = input;
@@ -31,6 +31,7 @@ export async function registerClientAction(input: ClientRegisterInput) {
   }
 
   const supabase = await createClient();
+  const standaloneSupabase = await createStandaloneClient();
 
   // 1. Obtener Tenant por Slug
   const { data: tenant, error: tenantErr } = await supabase
@@ -44,8 +45,8 @@ export async function registerClientAction(input: ClientRegisterInput) {
     return { error: 'El negocio no existe o se encuentra inactivo.' };
   }
 
-  // 2. Invocar servicio compartido de creación de clientes
-  const result = await registerClientShared(supabase, {
+  // 2. Invocar servicio compartido de creación de clientes con cliente aislado (para no mutar cookies de auth admin)
+  const result = await registerClientShared(standaloneSupabase, {
     tenantId: tenant.id,
     name,
     lastName,
@@ -59,6 +60,17 @@ export async function registerClientAction(input: ClientRegisterInput) {
     return { error: result.error };
   }
 
+  // 3. Establecer la cookie de sesión dedicada del portal del cliente
+  if (result.client?.id) {
+    const cookieStore = await cookies();
+    cookieStore.set('client_session', result.client.id, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+    });
+  }
+
   revalidatePath(`/${slug}`);
 
   return {
@@ -70,7 +82,7 @@ export async function registerClientAction(input: ClientRegisterInput) {
 }
 
 /**
- * Inicia sesión para un cliente
+ * Inicia sesión para un cliente sin alterar las cookies de Supabase Auth del Administrador
  */
 export async function loginClientAction(input: ClientLoginInput) {
   const { slug, email, password } = input;
@@ -80,6 +92,7 @@ export async function loginClientAction(input: ClientLoginInput) {
   }
 
   const supabase = await createClient();
+  const standaloneSupabase = await createStandaloneClient();
 
   // 1. Obtener Tenant por Slug
   const { data: tenant } = await supabase
@@ -95,13 +108,21 @@ export async function loginClientAction(input: ClientLoginInput) {
 
   const cleanEmail = email.toLowerCase().trim();
 
-  // 2. Intentar autenticación con Supabase Auth primero
-  const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+  // 2. Validar correo y clave usando cliente aislado (no muta las cookies de sesión del Administrador)
+  const { data: authData, error: authErr } = await standaloneSupabase.auth.signInWithPassword({
     email: cleanEmail,
     password,
   });
 
-  let user = authData?.user || null;
+  if (authErr) {
+    let friendly = 'Correo electrónico o contraseña incorrectos.';
+    if (authErr.message.toLowerCase().includes('email not confirmed')) {
+      friendly = 'Por favor confirma tu correo electrónico antes de ingresar.';
+    }
+    return { error: friendly };
+  }
+
+  const user = authData.user;
 
   // 3. Buscar el registro de cliente en la tabla `clients`
   let { data: clientRecord } = await supabase
@@ -111,22 +132,28 @@ export async function loginClientAction(input: ClientLoginInput) {
     .eq('email', cleanEmail)
     .maybeSingle();
 
-  if (authErr && !clientRecord) {
-    let friendly = 'Correo o contraseña incorrectos.';
-    if (authErr.message.toLowerCase().includes('email not confirmed')) {
-      friendly = 'Por favor confirma tu correo electrónico antes de ingresar.';
-    }
-    return { error: friendly };
-  }
-
-  if (user && clientRecord && !clientRecord.user_id) {
+  if (!clientRecord) {
+    const fullName = user.user_metadata?.full_name || cleanEmail.split('@')[0];
+    const { data: newClient } = await supabase
+      .from('clients')
+      .insert({
+        tenant_id: tenant.id,
+        user_id: user.id,
+        name: fullName,
+        email: cleanEmail,
+        created_source: 'client_portal',
+      })
+      .select()
+      .maybeSingle();
+    clientRecord = newClient;
+  } else if (!clientRecord.user_id) {
     await supabase
       .from('clients')
       .update({ user_id: user.id })
       .eq('id', clientRecord.id);
   }
 
-  // Guardar cookie de sesión del portal del cliente
+  // 4. Guardar EXCLUSIVAMENTE la cookie de sesión dedicada del cliente (sin tocar las de admin)
   if (clientRecord?.id) {
     const cookieStore = await cookies();
     cookieStore.set('client_session', clientRecord.id, {

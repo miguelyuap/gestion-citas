@@ -21,6 +21,12 @@ interface TemplateProps {
   bookingUrl: string;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
   hideHeaderFooter?: boolean;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function ElegantTemplate({
@@ -32,6 +38,9 @@ export function ElegantTemplate({
   bookingUrl,
   deviceViewport,
   hideHeaderFooter = false,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: TemplateProps) {
   const { settings, theme, sections, socials, gallery, testimonials } = appearance;
   const buttonStyle = theme.button_style || 'square';
@@ -51,6 +60,9 @@ export function ElegantTemplate({
             buttonStyle={buttonStyle}
             variant="elegant"
             deviceViewport={deviceViewport}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'services':
@@ -61,6 +73,9 @@ export function ElegantTemplate({
             bookingUrl={bookingUrl}
             buttonStyle={buttonStyle}
             deviceViewport={deviceViewport}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'staff':
@@ -71,6 +86,9 @@ export function ElegantTemplate({
             bookingUrl={bookingUrl}
             buttonStyle={buttonStyle}
             deviceViewport={deviceViewport}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'about':
@@ -85,6 +103,9 @@ export function ElegantTemplate({
             key="booking_cta"
             bookingUrl={bookingUrl}
             buttonStyle={buttonStyle}
+            onNavigateView={onNavigateView}
+            onOpenAuth={onOpenAuth}
+            isAuthenticated={isAuthenticated}
           />
         );
       case 'contact':
@@ -92,6 +113,7 @@ export function ElegantTemplate({
           <ContactSection
             key="contact"
             tenant={tenant}
+            settings={settings}
             socials={socials}
             workingHours={workingHours}
             deviceViewport={deviceViewport}

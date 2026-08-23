@@ -12,6 +12,12 @@ interface ServicesSectionProps {
   bookingUrl: string;
   buttonStyle?: ButtonStyleType;
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 const DEFAULT_SERVICE_IMAGES = [
@@ -25,12 +31,26 @@ export function ServicesSection({
   services,
   bookingUrl,
   deviceViewport,
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: ServicesSectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   if (!services || services.length === 0) {
     return null;
   }
+
+  const handleServiceClick = (e: React.MouseEvent, serviceId: string) => {
+    e.preventDefault();
+    if (onNavigateView) {
+      onNavigateView('booking', { serviceId });
+    } else if (!isAuthenticated && onOpenAuth) {
+      onOpenAuth('login');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = `${bookingUrl}?serviceId=${serviceId}`;
+    }
+  };
 
   // 6 servicios por página en escritorio / tablet, 3 en móvil
   const itemsPerPage = deviceViewport === 'mobile' ? 3 : 6;
@@ -71,13 +91,13 @@ export function ServicesSection({
         <div className={`grid ${gridColsClass}`}>
           {displayedServices.map((service, idx) => {
             const imageUrl = DEFAULT_SERVICE_IMAGES[idx % DEFAULT_SERVICE_IMAGES.length];
-            const itemBookingUrl = `${bookingUrl}?serviceId=${service.id}`;
 
             return (
-              <a
+              <button
+                type="button"
                 key={service.id}
-                href={itemBookingUrl}
-                className="group relative rounded-2xl overflow-hidden bg-[var(--card,#ffffff)] border border-[var(--border,#E4E2EC)] transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[var(--primary,#4F35D2)]/10 hover:border-[var(--primary)]/20 flex flex-col justify-between cursor-pointer focus:outline-none"
+                onClick={(e) => handleServiceClick(e, service.id)}
+                className="group relative rounded-2xl overflow-hidden bg-[var(--card,#ffffff)] border border-[var(--border,#E4E2EC)] transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[var(--primary,#4F35D2)]/10 hover:border-[var(--primary)]/20 flex flex-col justify-between cursor-pointer focus:outline-none text-left w-full"
               >
                 <div>
                   {/* Image with overlay */}
@@ -131,7 +151,7 @@ export function ServicesSection({
                     </div>
                   </div>
                 </div>
-              </a>
+              </button>
             );
           })}
         </div>

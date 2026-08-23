@@ -32,19 +32,49 @@ export function PublicFooter({ tenant, socials, onNavigateView }: PublicFooterPr
               Reserva tus citas de forma rápida, segura y sin complicaciones.
             </p>
             {socials && (
-              <div className="flex items-center gap-3 mt-5">
+              <div className="flex flex-wrap items-center gap-2.5 mt-5">
                 {socials.instagram && (
-                  <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                  <a href={socials.instagram} target="_blank" rel="noopener noreferrer" title="Instagram" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
                     IG
                   </a>
                 )}
                 {socials.facebook && (
-                  <a href={socials.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                  <a href={socials.facebook} target="_blank" rel="noopener noreferrer" title="Facebook" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
                     FB
                   </a>
                 )}
+                {socials.tiktok && (
+                  <a href={socials.tiktok} target="_blank" rel="noopener noreferrer" title="TikTok" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    TT
+                  </a>
+                )}
+                {socials.twitter && (
+                  <a href={socials.twitter} target="_blank" rel="noopener noreferrer" title="Twitter / X" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    X
+                  </a>
+                )}
+                {socials.youtube && (
+                  <a href={socials.youtube} target="_blank" rel="noopener noreferrer" title="YouTube" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    YT
+                  </a>
+                )}
+                {socials.linkedin && (
+                  <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    IN
+                  </a>
+                )}
+                {socials.website && (
+                  <a href={socials.website} target="_blank" rel="noopener noreferrer" title="Sitio Web" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    WEB
+                  </a>
+                )}
+                {socials.telegram && (
+                  <a href={socials.telegram} target="_blank" rel="noopener noreferrer" title="Telegram" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                    TG
+                  </a>
+                )}
                 {socials.whatsapp && (
-                  <a href={`https://wa.me/${socials.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-xs font-bold text-white">
+                  <a href={`https://wa.me/${socials.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="w-8 h-8 rounded-lg bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center hover:bg-emerald-600/50 transition-colors text-xs font-bold">
                     WA
                   </a>
                 )}

@@ -364,6 +364,27 @@ export async function cancelAppointmentAction(input: {
     return { error: 'La cita ya fue cancelada previamente.' };
   }
 
+  // 4. Validar política de cancelación configurada por el administrador en tenant_settings
+  const { data: settings } = await supabase
+    .from('tenant_settings')
+    .select('cancellation_hours_notice')
+    .eq('tenant_id', tenant.id)
+    .maybeSingle();
+
+  const hoursNotice = settings?.cancellation_hours_notice ?? 24;
+
+  if (hoursNotice > 0) {
+    const startTimeMs = new Date(appointment.start_time).getTime();
+    const nowMs = new Date().getTime();
+    const diffHours = (startTimeMs - nowMs) / (1000 * 60 * 60);
+
+    if (diffHours < hoursNotice) {
+      return {
+        error: `No es posible cancelar esta cita. De acuerdo con la política del negocio, las cancelaciones deben realizarse con al menos ${hoursNotice} hora${hoursNotice === 1 ? '' : 's'} de anticipación.`,
+      };
+    }
+  }
+
   // Actualizar estado a cancelada
   const { error: updateErr } = await supabase
     .from('appointments')

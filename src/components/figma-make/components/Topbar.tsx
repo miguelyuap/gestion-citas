@@ -37,9 +37,12 @@ interface Props {
   onSucursalChange: (s: string) => void;
   onMenuToggle: () => void;
   onNavigate?: (id: string) => void;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
 }
 
-export default function Topbar({ active, sucursal, onSucursalChange, onMenuToggle, onNavigate }: Props) {
+export default function Topbar({ active, sucursal, onSucursalChange, onMenuToggle, onNavigate, userName, userEmail, userRole }: Props) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showSucursal, setShowSucursal] = useState(false);
   const [showUser, setShowUser] = useState(false);
@@ -55,6 +58,17 @@ export default function Topbar({ active, sucursal, onSucursalChange, onMenuToggl
   const bp = useBreakpoint();
   const isMobile = bp === "mobile";
   const isTablet = bp === "tablet";
+
+  const userDisplayName = userName || "Administrador";
+  const userDisplayEmail = userEmail || "admin@negocio.com";
+  const userInitials = userDisplayName
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "AD";
+  const shortUserName = userDisplayName.split(" ")[0];
 
   const crumbs = BREADCRUMBS[active] || [active];
 
@@ -398,10 +412,10 @@ export default function Topbar({ active, sucursal, onSucursalChange, onMenuToggl
             background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
             display: "flex", alignItems: "center", justifyContent: "center",
             color: "white", fontWeight: 700, fontSize: 11,
-          }}>PA</div>
+          }}>{userInitials}</div>
           {!isMobile && (
             <>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Pedro A.</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{shortUserName}</span>
               <ChevronDown size={13} color="#94a3b8" />
             </>
           )}
@@ -409,11 +423,11 @@ export default function Topbar({ active, sucursal, onSucursalChange, onMenuToggl
         {showUser && (
           <div className="dropdown-menu" style={{ right: 0, top: "calc(100% + 6px)" }}>
             <div style={{ padding: "10px 14px 8px", borderBottom: "1px solid #f1f5f9" }}>
-              <div style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>Pedro Álvarez</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>pedro@empresa.cl</div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "#0f172a" }}>{userDisplayName}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>{userDisplayEmail}</div>
             </div>
-            <div className="dropdown-item" style={{ color: "#0f172a" }}><RefreshCw size={14} /> Mi perfil</div>
-            <div className="dropdown-item" style={{ color: "#0f172a" }}><CreditCard size={14} /> Suscripción</div>
+            <div className="dropdown-item" style={{ color: "#0f172a" }} onClick={() => { setShowUser(false); onNavigate?.("configuracion"); }}><RefreshCw size={14} /> Mi perfil</div>
+            <div className="dropdown-item" style={{ color: "#0f172a" }} onClick={() => { setShowUser(false); onNavigate?.("suscripcion"); }}><CreditCard size={14} /> Suscripción</div>
           </div>
         )}
       </div>

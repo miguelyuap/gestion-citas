@@ -12,7 +12,12 @@ interface HeroSectionProps {
   buttonStyle?: ButtonStyleType;
   variant?: 'modern' | 'elegant' | 'bold';
   deviceViewport?: 'desktop' | 'tablet' | 'mobile';
-  onNavigateView?: (view: 'landing' | 'booking' | 'appointments' | 'profile') => void;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function HeroSection({
@@ -21,7 +26,20 @@ export function HeroSection({
   buttonStyle = 'rounded',
   deviceViewport,
   onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: HeroSectionProps) {
+  const handleBookingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onNavigateView) {
+      onNavigateView('booking');
+    } else if (!isAuthenticated && onOpenAuth) {
+      onOpenAuth('login');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = bookingUrl;
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-[#0C0A1A] min-h-[90vh] flex items-center font-[var(--font-sans)]">
       {/* Animated orbs */}
@@ -95,9 +113,10 @@ export function HeroSection({
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 mb-12 animate-fade-up delay-300">
-              <a
-                href={bookingUrl}
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl font-semibold text-sm text-white transition-all duration-300 active:scale-95 shadow-[0_0_32px_rgba(79,53,210,0.45)]"
+              <button
+                type="button"
+                onClick={handleBookingClick}
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl font-semibold text-sm text-white transition-all duration-300 active:scale-95 shadow-[0_0_32px_rgba(79,53,210,0.45)] cursor-pointer"
                 style={{
                   backgroundColor: 'var(--primary, #4F35D2)',
                 }}
@@ -105,7 +124,7 @@ export function HeroSection({
                 <Calendar className="w-4 h-4" />
                 {settings.hero_cta_text || 'Agendar cita ahora'}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </button>
               <button
                 onClick={() => {
                   const el = document.getElementById('services');

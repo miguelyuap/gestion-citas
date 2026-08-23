@@ -48,7 +48,7 @@ export function ClientAuthModal({
       });
 
       if (res.error) {
-        await NotificationService.error('Error de Inicio de Sesión', res.error);
+        await NotificationService.error('Datos Incorrectos', res.error || 'El correo electrónico o la contraseña ingresados son incorrectos.');
       } else {
         if (onSuccess) onSuccess(res.user, res.client);
         onClose();

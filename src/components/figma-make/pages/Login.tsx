@@ -109,6 +109,7 @@ export default function Login({ onLogin, initialMode = "login" }: Props) {
         const res = await loginAction(formData);
         if (res?.error) {
           setError(res.error);
+          await NotificationService.error('Datos Incorrectos', res.error || 'El correo electrónico o la contraseña ingresados son incorrectos.');
         } else if (res?.success) {
           if (onLogin) onLogin();
           if (typeof window !== "undefined") {
@@ -116,7 +117,9 @@ export default function Login({ onLogin, initialMode = "login" }: Props) {
           }
         }
       } catch (err: any) {
-        setError(err?.message || "No pudimos iniciar sesión. Por favor verifica tus datos e inténtalo nuevamente.");
+        const errMsg = err?.message || "No pudimos iniciar sesión. Por favor verifica tus datos e inténtalo nuevamente.";
+        setError(errMsg);
+        await NotificationService.error('Datos Incorrectos', errMsg);
       } finally {
         setLoading(false);
       }

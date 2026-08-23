@@ -36,10 +36,13 @@ interface Props {
   mobileOpen: boolean;
   onMobileClose: () => void;
   tenantName?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
   logoUrl?: string | null;
 }
 
-export default function Sidebar({ active, onNavigate, collapsed, onToggle, onLogout, mobileOpen, onMobileClose, tenantName = "Mi Negocio", logoUrl }: Props) {
+export default function Sidebar({ active, onNavigate, collapsed, onToggle, onLogout, mobileOpen, onMobileClose, tenantName = "Mi Negocio", userName, userEmail, userRole, logoUrl }: Props) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const bp = useBreakpoint();
 
@@ -50,6 +53,16 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggle, onLog
     .join("")
     .toUpperCase();
   const isMobile = bp === "mobile";
+
+  const userDisplayName = userName || "Administrador";
+  const userDisplayRole = userRole || "Administrador";
+  const userInitials = userDisplayName
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "AD";
 
   const effectiveCollapsed = isMobile ? false : collapsed;
 
@@ -224,11 +237,11 @@ export default function Sidebar({ active, onNavigate, collapsed, onToggle, onLog
               background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "white", fontWeight: 700, fontSize: 12,
-            }}>PA</div>
+            }}>{userInitials}</div>
             {!effectiveCollapsed && (
               <div style={{ flex: 1, overflow: "hidden" }}>
-                <div style={{ fontWeight: 600, fontSize: 12.5, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Pedro Álvarez</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>Administrador</div>
+                <div style={{ fontWeight: 600, fontSize: 12.5, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{userDisplayName}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>{userDisplayRole}</div>
               </div>
             )}
             {!effectiveCollapsed && (

@@ -20,24 +20,61 @@ export default async function DashboardPage() {
 
   let tenantName = 'Mi Negocio';
   let logoUrl: string | null = null;
-  let userName = user?.email ? user.email.split('@')[0] : 'Administrador';
+  let userName = user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Administrador');
+  let userEmail = user?.email || 'admin@negocio.com';
+  let userRole = 'Administrador';
   let tenantId = '';
 
   if (user) {
     tenantId = (await getTenantIdForUser(supabase, user)) || '';
+    userEmail = user.email || userEmail;
 
+    // 1. Intentar obtener el perfil de administración del usuario autenticado
     const { data: profile } = await supabase
       .from('profiles')
       .select('*, tenants(*)')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profile) {
+    if (profile && profile.role !== 'client') {
       if (profile.full_name) userName = profile.full_name;
+      if (profile.role) {
+        userRole = profile.role === 'owner' ? 'Propietario' : profile.role === 'admin' ? 'Administrador' : profile.role;
+      }
       const tenantObj = profile.tenants as any;
       if (tenantObj) {
         tenantName = tenantObj.name || tenantName;
         logoUrl = tenantObj.logo_url || null;
+      }
+    } else if (tenantId) {
+      // 2. Si el usuario logueado es cliente, cargar la información del propietario del negocio
+      const { data: tenantObj } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', tenantId)
+        .maybeSingle();
+
+      if (tenantObj) {
+        tenantName = tenantObj.name || tenantName;
+        logoUrl = tenantObj.logo_url || null;
+
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .eq('role', 'owner')
+          .maybeSingle();
+
+        if (ownerProfile && ownerProfile.full_name) {
+          userName = ownerProfile.full_name;
+          userRole = 'Propietario';
+        } else {
+          userName = tenantObj.name || 'Administrador';
+          userRole = 'Administrador';
+        }
+        if (tenantObj.email) {
+          userEmail = tenantObj.email;
+        }
       }
     }
   }
@@ -130,20 +167,20 @@ export default async function DashboardPage() {
         .eq('tenant_id', tenantId)
         .gte('created_at', startLastMonth.toISOString())
         .lte('created_at', endLastMonth.toISOString()),
-      // Ingresos de citas completadas este mes
+      // Ingresos de citas completadas o confirmadas este mes
       supabase
         .from('appointments')
-        .select('total_price')
+        .select('total_price, status, start_time, services(price)')
         .eq('tenant_id', tenantId)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'confirmed'])
         .gte('start_time', startThisMonth.toISOString())
         .lte('start_time', endThisMonth.toISOString()),
-      // Ingresos de citas completadas el mes anterior
+      // Ingresos de citas completadas o confirmadas el mes anterior
       supabase
         .from('appointments')
-        .select('total_price')
+        .select('total_price, status, start_time, services(price)')
         .eq('tenant_id', tenantId)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'confirmed'])
         .gte('start_time', startLastMonth.toISOString())
         .lte('start_time', endLastMonth.toISOString()),
       // Obtenemos el listado completo de citas para el tenant (Idéntico a Agenda.tsx)
@@ -175,14 +212,17 @@ export default async function DashboardPage() {
     clientsThisMonthCount = curClientsCount || 0;
     clientsLastMonthCount = prevClientsCount || 0;
 
-    incomeThisMonthVal = (completedThisMonth || []).reduce(
-      (acc, item) => acc + (Number(item.total_price) || 0),
-      0
-    );
-    incomeLastMonthVal = (completedLastMonth || []).reduce(
-      (acc, item) => acc + (Number(item.total_price) || 0),
-      0
-    );
+    incomeThisMonthVal = (completedThisMonth || []).reduce((acc: number, item: any) => {
+      const srvPrice = (item.services as any)?.price ? Number((item.services as any).price) : 0;
+      const itemPrice = Number(item.total_price) || srvPrice || 0;
+      return acc + itemPrice;
+    }, 0);
+
+    incomeLastMonthVal = (completedLastMonth || []).reduce((acc: number, item: any) => {
+      const srvPrice = (item.services as any)?.price ? Number((item.services as any).price) : 0;
+      const itemPrice = Number(item.total_price) || srvPrice || 0;
+      return acc + itemPrice;
+    }, 0);
 
     // Mapear Citas de hoy (incluyendo el PRECIO)
     if (todayAppointments.length > 0) {
@@ -346,6 +386,8 @@ export default async function DashboardPage() {
       initialLoggedIn={true}
       tenantName={tenantName}
       userName={userName}
+      userEmail={userEmail}
+      userRole={userRole}
       logoUrl={logoUrl}
       kpis={kpis}
       citasHoyData={citasHoyList}

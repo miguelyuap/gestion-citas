@@ -24,7 +24,12 @@ const PLANES = [
 
 const BILLING = ["Mensual", "Trimestral", "Semestral", "Anual"];
 
-export default function Suscripcion() {
+interface SuscripcionProps {
+  userName?: string;
+  userEmail?: string;
+}
+
+export default function Suscripcion({ userName, userEmail }: SuscripcionProps) {
   const [billing,       setBilling]       = useState("Mensual");
   const [showCheckout,  setShowCheckout]  = useState<typeof PLANES[0] | null>(null);
   const [checkoutStep,  setCheckoutStep]  = useState<"form"|"processing"|"success">("form");
@@ -171,8 +176,8 @@ export default function Suscripcion() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
-                      <div><label className="label">Nombre completo</label><input className="input" defaultValue="Pedro Álvarez" /></div>
-                      <div><label className="label">Correo</label><input className="input" type="email" defaultValue="pedro@agendapro.cl" /></div>
+                      <div><label className="label">Nombre completo</label><input className="input" defaultValue={userName || "Administrador"} /></div>
+                      <div><label className="label">Correo</label><input className="input" type="email" defaultValue={userEmail || "admin@negocio.com"} /></div>
                     </div>
                     <div>
                       <label className="label">Número de tarjeta</label>

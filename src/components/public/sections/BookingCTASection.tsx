@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Container } from '../shared/Container';
 import { ThemeButton } from '../shared/ThemeButton';
@@ -7,12 +9,32 @@ import { Calendar, Sparkles } from 'lucide-react';
 interface BookingCTASectionProps {
   bookingUrl: string;
   buttonStyle?: ButtonStyleType;
+  onNavigateView?: (
+    view: 'landing' | 'booking' | 'appointments' | 'profile',
+    options?: { serviceId?: string; staffId?: string; branchId?: string }
+  ) => void;
+  onOpenAuth?: (tab: 'login' | 'register') => void;
+  isAuthenticated?: boolean;
 }
 
 export function BookingCTASection({
   bookingUrl,
   buttonStyle = 'rounded',
+  onNavigateView,
+  onOpenAuth,
+  isAuthenticated = false,
 }: BookingCTASectionProps) {
+  const handleBookingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onNavigateView) {
+      onNavigateView('booking');
+    } else if (!isAuthenticated && onOpenAuth) {
+      onOpenAuth('login');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = bookingUrl;
+    }
+  };
+
   return (
     <section className="py-20 bg-gradient-to-r from-[var(--primary)]/20 via-[var(--surface)] to-[var(--secondary)]/20 border-y border-[var(--foreground)]/10 text-center relative overflow-hidden">
       <Container className="relative z-10 space-y-6 max-w-3xl mx-auto">
@@ -28,12 +50,11 @@ export function BookingCTASection({
         </p>
         <div className="pt-4 flex justify-center">
           <ThemeButton
-            asAnchor
-            href={bookingUrl}
+            onClick={handleBookingClick}
             size="lg"
             buttonStyle={buttonStyle}
             variant="primary"
-            className="shadow-2xl text-lg px-10 py-5"
+            className="shadow-2xl text-lg px-10 py-5 cursor-pointer"
           >
             <Calendar className="w-6 h-6" />
             RESERVAR AHORA

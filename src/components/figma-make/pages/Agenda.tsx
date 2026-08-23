@@ -656,13 +656,22 @@ export default function Agenda() {
             <Filter size={13} color="#2563eb" />
             <select
               className="input"
-              style={{ width: isMobile ? 130 : 170, fontSize: 12, height: 32, color: "#0f172a", fontWeight: 600 }}
+              style={{
+                maxWidth: isMobile ? 130 : 180,
+                fontSize: 12,
+                height: 32,
+                color: "#0f172a",
+                fontWeight: 600,
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+              }}
               value={filterProf}
               onChange={(e) => setFilterProf(e.target.value)}
             >
               <option value="">Todos los profesionales</option>
               {staffList.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} title={p.name}>
                   {p.name}
                 </option>
               ))}
@@ -716,10 +725,9 @@ export default function Agenda() {
             )}
           </div>
         ) : (
-          /* Desktop Calendar Grid */
-          <div style={{ display: "flex", minHeight: "100%" }}>
-            <div style={{ width: 64, borderRight: "1px solid #e2e8f0", background: "white", flexShrink: 0 }}>
-              <div style={{ height: 44, borderBottom: "1px solid #e2e8f0" }} />
+          <div style={{ display: "flex", minHeight: "100%", overflowX: "auto" }}>
+            <div style={{ width: 64, borderRight: "1px solid #e2e8f0", background: "white", flexShrink: 0, position: "sticky", left: 0, zIndex: 10 }}>
+              <div style={{ height: 48, borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }} />
               {HORAS.map((h) => (
                 <div key={h} style={{ height: 60, padding: "4px 8px", fontSize: 11.5, fontFamily: "var(--font-mono)", color: "#0f172a", fontWeight: 700, borderBottom: "1px solid #f1f5f9" }}>
                   {h}
@@ -727,15 +735,62 @@ export default function Agenda() {
               ))}
             </div>
 
-            <div style={{ flex: 1, display: "grid", gridTemplateColumns: `repeat(${activeStaff.length || 1}, 1fr)`, minWidth: 600 }}>
+            <div
+              style={{
+                flex: 1,
+                display: "grid",
+                gridTemplateColumns: `repeat(${activeStaff.length || 1}, minmax(160px, 1fr))`,
+                minWidth: Math.max(600, activeStaff.length * 160),
+              }}
+            >
               {activeStaff.length === 0 ? (
                 <div style={{ padding: 40, textAlign: "center", color: "#475569" }}>No hay profesionales registrados.</div>
               ) : (
                 activeStaff.map((p) => (
-                  <div key={p.id} style={{ borderRight: "1px solid #e2e8f0", background: "white" }}>
-                    <div style={{ padding: "10px 12px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", textAlign: "center" }}>
-                      <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0f172a" }}>{p.name}</div>
-                      <div style={{ fontSize: 11, color: "#475569", fontWeight: 500 }}>Especialista</div>
+                  <div key={p.id} style={{ borderRight: "1px solid #e2e8f0", background: "white", minWidth: 160 }}>
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        borderBottom: "1px solid #e2e8f0",
+                        background: "#f8fafc",
+                        textAlign: "center",
+                        height: 48,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        overflow: "hidden",
+                      }}
+                      title={p.name}
+                    >
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          fontSize: 13,
+                          color: "#0f172a",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "100%",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {p.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 10.5,
+                          color: "#64748b",
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "100%",
+                          marginTop: 2,
+                        }}
+                      >
+                        Especialista
+                      </div>
                     </div>
 
                     <div style={{ position: "relative" }}>
